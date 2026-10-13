@@ -16,6 +16,9 @@
 - **Investigador Principal:** **Ing. Químico Gastón Chevarria**
 - **Filiación Académica / Institucional:** Investigador Independiente · Especialista en Arquitectura de Sistemas de Inteligencia Artificial.  
   Formación de grado y posgrado: **Universidad Tecnológica Nacional (UTN FRVM)** · **Universidad Nacional de San Martín (UNSAM)**.
+- **Canales Oficiales de Contacto:**
+  - Investigador Principal: [`gaston@oceaneye-ai.com`](mailto:gaston@oceaneye-ai.com)
+  - Despacho Institucional: [`contacto@oceaneye-ai.com`](mailto:contacto@oceaneye-ai.com)
 - **Antecedente de Teledetección y Machine Learning Ambiental:**  
   *«Clasificación y Monitoreo de Parámetros de Calidad de Agua en la Franja Costera del Río de la Plata mediante Modelos de Machine Learning»* (desarrollado en colaboración con series de datos abiertos del Ministerio de Ambiente y Desarrollo Sostenible de la Nación).
 

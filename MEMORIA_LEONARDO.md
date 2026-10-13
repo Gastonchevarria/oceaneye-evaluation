@@ -4,6 +4,7 @@
 **Área Temática:** Ciencias de la Computación / Inteligencia Artificial & Teledetección  
 **Investigador Principal:** Ing. Químico Gastón Chevarria  
 **Filiación e Institución de Referencia:** Investigador Independiente · Especialista en Arquitectura de Sistemas de Inteligencia Artificial (Universidad Tecnológica Nacional FRVM · Universidad Nacional de San Martín).  
+**Canales de Correspondencia:** `gaston@oceaneye-ai.com` · `contacto@oceaneye-ai.com`  
 **Antecedente Previo de Investigación Ambiental:**  
 *«Clasificación y Monitoreo de Parámetros de Calidad de Agua en la Franja Costera del Río de la Plata mediante Modelos de Machine Learning (en colaboración con datos del Ministerio de Ambiente y Desarrollo Sostenible de la República Argentina)»*.
 
