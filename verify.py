@@ -99,20 +99,22 @@ def test_legal_benchmark():
     print(f"{C_BOLD}[2/5] Verificando Motor Jurídico Neuro-Simbólico (GET /api/v1/sar/legal/benchmark)...{C_RESET}")
     data = http_get(f"{API_BASE}/api/v1/sar/legal/benchmark")
     total_cases = data.get("total_test_cases", 0)
-    passed = data.get("passed_cases", 0)
-    accuracy = data.get("accuracy_percent", 0.0)
-    hallucination = data.get("hallucination_rate_percent", 100.0)
+    accuracy = data.get("rule_engine_accuracy_percent", 0.0)
+    hallucination = data.get("certified_post_validation_hallucination_rate_percent", 100.0)
+    adversarial_catch = data.get("adversarial_hallucination_catch_rate_percent", 0.0)
+    latency_ms = data.get("average_evaluation_latency_ms", 0.0)
 
     print(f"      • Casos Jurídicos Evaluados: {total_cases}")
-    print(f"      • Casos Validados Formalmente: {passed} / {total_cases}")
-    print(f"      • Exactitud Normativa: {accuracy}% (Ley 24.922 & CONVEMAR)")
-    print(f"      • Tasa de Alucinación: {hallucination}%")
+    print(f"      • Exactitud del Motor de Reglas: {accuracy}% (Ley 24.922 & CONVEMAR)")
+    print(f"      • Detección de Ataques Adversarios: {adversarial_catch}%")
+    print(f"      • Tasa de Alucinación Post-Validación: {hallucination}%")
+    print(f"      • Latencia Media de Evaluación: {latency_ms} ms")
 
-    assert total_cases >= 30, "Se esperaba benchmark de al menos 30 casos legales"
-    assert passed == total_cases, "Hubo discrepancias en el dictamen legal"
+    assert total_cases == 30, f"Se esperaban 30 casos legales, se recibieron {total_cases}"
     assert accuracy == 100.0, "Exactitud menor al 100%"
     assert hallucination == 0.0, "Alucinación jurídica detectada"
-    print(f"{C_GREEN}      ✔ Consistencia Jurídica Verificada (0.00% Alucinación){C_RESET}\n")
+    assert adversarial_catch == 100.0, "Falla en captura de adversarios"
+    print(f"{C_GREEN}      ✔ Consistencia Jurídica Verificada (0.00% Alucinación · 100% Precisión){C_RESET}\n")
 
 
 def test_public_key():
