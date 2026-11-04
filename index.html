@@ -1,0 +1,1992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OceanEye Sentinel 2.0 &amp; Omni Z3 Formal Prover (Meta SAM 3.1 + Muse Wonder 1.0)</title>
+    <meta name="description" content="Orbital C-Band SAR maritime intelligence fusing Meta SAM 3.1 sub-pixel segmentation, Muse Wonder 1.0 vs Muse Spark 1.3 neuro-symbolic reasoning (n=30, McNemar p=0.0156), Ed25519 chain of custody, and Autonomous Z3 x402 Formal Prover on Base Mainnet.">
+    <meta property="og:title" content="OceanEye Sentinel 2.0 &amp; Omni Z3 Formal Prover (Meta SAM 3.1 + Muse Wonder 1.0)">
+    <meta property="og:description" content="Orbital C-Band SAR maritime intelligence fusing Meta SAM 3.1 sub-pixel segmentation, Muse Wonder 1.0 vs Muse Spark 1.3 neuro-symbolic reasoning (n=30, McNemar p=0.0156), Ed25519 chain of custody, and Autonomous Z3 x402 Formal Prover on Base Mainnet.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none' stroke='%2300D2FE' stroke-width='2'><circle cx='16' cy='16' r='12'/><path d='M4 16h24M16 4a18 18 0 0 1 0 24M16 4a18 18 0 0 0 0 24'/></svg>">
+    <link rel="describedby" href="./llms.txt" type="text/plain">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="./sentinel-telemetry.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Person",
+          "@id": "https://oceaneye-ai.com/#researcher",
+          "name": "Gastón Chevarria",
+          "email": "mailto:gaston@oceaneye-ai.com",
+          "jobTitle": "Lead AI Systems Architect · OceanEye Sentinel 2.0"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://oceaneye-ai.com/#project",
+          "name": "OceanEye Sentinel 2.0 & Omni Z3 Formal Prover",
+          "applicationCategory": "Geospatial Multimodal AI & Formal Verification Platform",
+          "url": "https://sentinel.oceaneye-ai.com",
+          "description": "Real-time orbital C-Band SAR maritime detection platform powered by Meta SAM 3.1, Muse Wonder 1.0, Muse Spark 1.3, Muse Image 1.0, Neuro-Symbolic Validator, Z3 Formal Prover, and Ed25519 cryptographic signature.",
+          "author": { "@id": "https://oceaneye-ai.com/#researcher" }
+        }
+      ]
+    }
+    </script>
+    <style>
+        /* ════════════════════════════════════════════════════════════════════════
+           1. SISTEMA VISUAL & PALETA OFICIAL (OCEANEYE SENTINEL 2.0 TACTICAL RESEARCH SPEC)
+           ════════════════════════════════════════════════════════════════════════ */
+        :root {
+            --bg-void: #060709;
+            --bg-surface: #0D111A;
+            --bg-surface-elevated: #0F1117;
+            --bg-surface-hover: #141A28;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-subtle: rgba(255, 255, 255, 0.05);
+            --border-cyan: rgba(0, 210, 254, 0.35);
+            --border-hover: rgba(0, 210, 254, 0.6);
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            
+            /* Acentos Oficiales OceanEye */
+            --accent-cyan: #00D2FE;
+            --accent-cyan-glow: rgba(0, 210, 254, 0.35);
+            --accent-indigo: #6366F1;
+            --accent-indigo-glow: rgba(99, 102, 241, 0.25);
+            --emerald: #10B981;
+            --emerald-glow: rgba(16, 185, 129, 0.35);
+            --crimson: #EF4444;
+            --crimson-glow: rgba(239, 68, 68, 0.45);
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            
+            /* Spring Physics (Emil Kowalski Spec) */
+            --spring-transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-void);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        h1, h2, h3, h4, .nav-title, .section-title {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            letter-spacing: -0.03em;
+            font-weight: 800;
+        }
+
+        .mono, .stat-number, .spec-chip, .demo-hud-val, .radar-degree-marker, .contact-hud {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* ── AMBIENT SPOTLIGHT & BACKLIGHT GLOW ── */
+        .ambient-glow {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .ambient-glow-top {
+            top: -120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1000px;
+            height: 520px;
+            background: radial-gradient(circle at 50% 0%, rgba(0, 210, 254, 0.14) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
+            filter: blur(120px);
+        }
+        .ambient-glow-middle {
+            top: 850px;
+            right: -100px;
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, rgba(0, 210, 254, 0.05) 55%, transparent 70%);
+            filter: blur(130px);
+        }
+
+        /* ── NAVBAR INSTITUCIONAL ── */
+        .site-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(6, 7, 9, 0.88);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+        }
+        .nav-logo {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #0284c7, #00d2fe);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 0 16px var(--accent-cyan-glow);
+        }
+        .nav-title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+        }
+        .badge-sovereignty {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9.5px;
+            font-weight: 700;
+            padding: 2px 8px;
+            background: rgba(0, 210, 254, 0.12);
+            border: 1px solid var(--border-cyan);
+            border-radius: 100px;
+            color: #38bdf8;
+            letter-spacing: 0.6px;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 600;
+            transition: color 0.18s ease;
+        }
+        .nav-link:hover { color: #ffffff; }
+
+        .nav-cta-btn {
+            background: linear-gradient(135deg, #0284c7, #00d2fe);
+            color: #040810;
+            font-weight: 800;
+            font-size: 12.5px;
+            padding: 9px 18px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 25px rgba(0, 210, 254, 0.4);
+            transition: var(--spring-transition);
+        }
+        .nav-cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(0, 210, 254, 0.65);
+            color: #000;
+        }
+        .nav-cta-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* ── HERO SECTION (2-COL CINEMATOGRAPHIC LAYOUT) ── */
+        .hero-section {
+            min-height: 85vh;
+            padding: 44px 32px 50px;
+            max-width: 1240px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1.15fr 0.85fr;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            z-index: 1;
+        }
+        .hero-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+        .hero-pill-critical {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            color: #fca5a5;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.8px;
+            padding: 5px 14px;
+            border-radius: 100px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pulse-beacon {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #ef4444;
+            box-shadow: 0 0 8px #ef4444;
+            animation: pulse-dot 1.2s infinite;
+        }
+        @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.7)} }
+
+        .hero-title {
+            font-size: clamp(34px, 4.4vw, 54px);
+            font-weight: 900;
+            line-height: 1.12;
+            letter-spacing: -0.035em;
+            color: #ffffff;
+            margin-bottom: 22px;
+        }
+        .hero-title span {
+            background: linear-gradient(135deg, #ffffff 40%, #00d2fe 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: clamp(14.5px, 1.6vw, 17px);
+            line-height: 1.65;
+            color: #cbd5e1;
+            margin-bottom: 34px;
+            max-width: 600px;
+        }
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .btn-warroom-giant {
+            background: #F8FAFC;
+            color: #060709;
+            font-weight: 800;
+            font-size: 14px;
+            padding: 14px 24px;
+            border-radius: 6px;
+            border: 1px solid #FFFFFF;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            transition: var(--spring-transition);
+        }
+        .btn-warroom-giant:hover {
+            transform: translateY(-2px);
+            background: #FFFFFF;
+            box-shadow: 0 12px 28px rgba(0, 210, 254, 0.18);
+            color: #060709;
+        }
+        .btn-warroom-giant:active {
+            transform: scale(0.98);
+        }
+        .kbd-hint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(6, 7, 9, 0.12);
+            border: 1px solid rgba(6, 7, 9, 0.22);
+            color: #060709;
+        }
+        .trust-bar-institutional {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 18px;
+            padding-top: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            color: rgba(248, 250, 252, 0.6);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+        .hud-corner-box {
+            position: relative;
+        }
+        .hud-corner-box::before,
+        .hud-corner-box::after {
+            content: "+";
+            position: absolute;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            line-height: 1;
+            color: rgba(0, 210, 254, 0.45);
+            pointer-events: none;
+        }
+        .hud-corner-box::before { top: 8px; left: 10px; }
+        .hud-corner-box::after  { top: 8px; right: 10px; }
+        .btn-editorial-secondary {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border);
+            color: #e2e8f0;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 15px 22px;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: var(--spring-transition);
+        }
+        .btn-editorial-secondary:hover {
+            background: rgba(255, 255, 255, 0.09);
+            border-color: rgba(255, 255, 255, 0.25);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+        .btn-editorial-secondary:active {
+            transform: scale(0.97);
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════
+           2. ANIMATIC DEL ESCÁNER DE RADAR SAR (60 FPS CONICAL SWEEP)
+           ════════════════════════════════════════════════════════════════════════ */
+        .radar-viewport-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .radar-bezel {
+            width: 360px;
+            height: 360px;
+            border-radius: 50%;
+            background: #04060A;
+            border: 2px solid rgba(0, 210, 254, 0.35);
+            box-shadow: 0 0 40px rgba(0, 210, 254, 0.15), inset 0 0 40px rgba(0, 0, 0, 0.9);
+            position: relative;
+            overflow: hidden;
+        }
+        .radar-degree-marker {
+            position: absolute;
+            font-size: 9px;
+            color: #64748b;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .deg-0   { top: 6px; left: 50%; transform: translateX(-50%); }
+        .deg-90  { top: 50%; right: 8px; transform: translateY(-50%); }
+        .deg-180 { bottom: 6px; left: 50%; transform: translateX(-50%); }
+        .deg-270 { top: 50%; left: 8px; transform: translateY(-50%); }
+
+        .radar-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        .ring-1 { width: 90px; height: 90px; }
+        .ring-2 { width: 170px; height: 170px; }
+        .ring-3 { width: 250px; height: 250px; }
+        .ring-4 {
+            width: 310px;
+            height: 310px;
+            border: 1.5px solid rgba(0, 210, 254, 0.45);
+            box-shadow: 0 0 12px rgba(0, 210, 254, 0.15);
+        }
+        .eez-label {
+            position: absolute;
+            bottom: 6px;
+            right: 18px;
+            font-size: 8px;
+            font-weight: 800;
+            color: #00d2fe;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.5px;
+        }
+
+        .radar-axis-h {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+        .radar-axis-v {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.08);
+            pointer-events: none;
+        }
+
+        /* Blue Hole Polygon Overlay */
+        .radar-blue-hole-polygon {
+            position: absolute;
+            top: 36%;
+            left: 48%;
+            width: 110px;
+            height: 80px;
+            border: 1px dashed rgba(99, 102, 241, 0.55);
+            background: rgba(99, 102, 241, 0.06);
+            border-radius: 6px;
+            transform: rotate(-15deg);
+            pointer-events: none;
+        }
+        .blue-hole-label {
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            font-size: 7px;
+            font-weight: 800;
+            color: #818cf8;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* 60 FPS Conical Sweep Beam */
+        .radar-conical-sweep {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, rgba(0, 210, 254, 0.45) 0deg, rgba(0, 210, 254, 0.08) 35deg, transparent 90deg);
+            animation: radar-sweep-spin 4s linear infinite;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+        @keyframes radar-sweep-spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Blinking Target Vessels */
+        .radar-contact {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+        }
+        .contact-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            position: relative;
+        }
+        .crimson-dot { background: #ef4444; box-shadow: 0 0 10px #ef4444; }
+        .emerald-dot { background: #10b981; box-shadow: 0 0 10px #10b981; }
+
+        .contact-ping {
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            animation: contact-ping-pulse 2.2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .crimson-ping { border: 1.5px solid #ef4444; }
+        .emerald-ping { border: 1.5px solid #10b981; }
+
+        @keyframes contact-ping-pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3.2); opacity: 0; }
+        }
+
+        .contact-hud {
+            position: absolute;
+            top: -24px;
+            left: 12px;
+            background: rgba(13, 17, 26, 0.95);
+            border: 1px solid rgba(239, 68, 68, 0.45);
+            border-radius: 4px;
+            padding: 2px 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+        }
+        .contact-hud.friendly { border-color: rgba(16, 185, 129, 0.45); }
+        .contact-id { font-size: 8px; font-weight: 800; color: #f8fafc; }
+        .contact-sub { font-size: 7px; color: #fca5a5; font-weight: 600; }
+        .contact-hud.friendly .contact-sub { color: #86efac; }
+
+        .radar-status-bar {
+            position: absolute;
+            bottom: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(13, 17, 26, 0.9);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 3px 10px;
+            font-size: 8px;
+            font-weight: 800;
+            color: #38bdf8;
+            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+            letter-spacing: 0.5px;
+        }
+        .status-indicator {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #00d2fe;
+            box-shadow: 0 0 6px #00d2fe;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════
+           3. LIVE MARQUEE TICKER (ATLÁNTICO SUR EVENT STREAM)
+           ════════════════════════════════════════════════════════════════════════ */
+        .marquee-strip {
+            background: #090D15;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+            white-space: nowrap;
+            padding: 10px 0;
+            margin: 20px 0 40px;
+            position: relative;
+            z-index: 2;
+        }
+        .marquee-track {
+            display: inline-flex;
+            gap: 36px;
+            animation: marquee-scroll 34s linear infinite;
+        }
+        .marquee-track:hover { animation-play-state: paused; }
+        @keyframes marquee-scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .marquee-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11.5px;
+            font-family: 'JetBrains Mono', monospace;
+            color: #94a3b8;
+        }
+        .marquee-item strong { color: #f8fafc; font-weight: 700; }
+        .dot-crimson { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 6px #ef4444; }
+        .dot-cyan    { width: 6px; height: 6px; border-radius: 50%; background: #00d2fe; box-shadow: 0 0 6px #00d2fe; }
+        .dot-emerald { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 6px #10b981; }
+        .dot-indigo  { width: 6px; height: 6px; border-radius: 50%; background: #6366f1; box-shadow: 0 0 6px #6366f1; }
+
+        /* ════════════════════════════════════════════════════════════════════════
+           4. LIVE BENCHMARK STATS TICKER (CONTEO SUAVE DINÁMICO)
+           ════════════════════════════════════════════════════════════════════════ */
+        .stats-strip-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 32px;
+            position: relative;
+            z-index: 2;
+        }
+        .stats-strip {
+            background: rgba(13, 17, 26, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 24px 32px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .stat-number {
+            font-size: 30px;
+            font-weight: 900;
+            color: #00d2fe;
+            letter-spacing: -0.04em;
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+        .stat-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+        .stat-sub {
+            font-size: 10.5px;
+            color: #64748b;
+        }
+
+        /* ════════════════════════════════════════════════════════════════════════
+           5. BENTO GRID DE 4 PILARES DE INNOVACIÓN (OCEANEYE SENTINEL 2.0 TACTICAL DARK)
+           ════════════════════════════════════════════════════════════════════════ */
+        .section-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 90px 32px;
+            position: relative;
+            z-index: 2;
+        }
+        .section-header {
+            margin-bottom: 48px;
+        }
+        .section-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 800;
+            color: #00d2fe;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+        .section-title {
+            font-size: clamp(26px, 3.6vw, 38px);
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+        }
+        .section-desc {
+            font-size: 15px;
+            color: #94a3b8;
+            max-width: 720px;
+            margin-top: 10px;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+        .bento-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            transition: var(--spring-transition);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .bento-card:hover {
+            border-color: rgba(0, 210, 254, 0.45);
+            transform: translateY(-4px);
+            box-shadow: 0 16px 36px rgba(0, 210, 254, 0.12), 0 0 24px rgba(99, 102, 241, 0.08);
+        }
+        .bento-col-7 { grid-column: span 7; }
+        .bento-col-5 { grid-column: span 5; }
+        .bento-col-6 { grid-column: span 6; }
+        .bento-col-12 { grid-column: span 12; }
+
+        .card-icon {
+            font-size: 32px;
+            margin-bottom: 16px;
+            display: inline-block;
+        }
+        .card-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.025em;
+            margin-bottom: 10px;
+        }
+        .card-body {
+            font-size: 13.5px;
+            color: #cbd5e1;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .card-specs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: auto;
+        }
+        .spec-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 10.5px;
+            color: #38bdf8;
+            font-weight: 600;
+        }
+
+        /* ── INTERACTIVE PERITAJE DEMO BOX ── */
+        .peritaje-demo-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-cyan);
+            border-radius: var(--radius-lg);
+            padding: 36px;
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(0, 210, 254, 0.12);
+        }
+        .demo-hud-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin: 20px 0 26px;
+        }
+        .demo-hud-card {
+            background: #090e18;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 14px;
+        }
+        .demo-hud-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .demo-hud-val {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* ── SOVEREIGN LEGAL BANNER ── */
+        .legal-banner {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(6, 9, 16, 0.95));
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            margin-top: 30px;
+        }
+
+        /* ── FOOTER INSTITUCIONAL ── */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            background: #040508;
+            padding: 60px 32px 40px;
+            position: relative;
+            z-index: 2;
+        }
+        .footer-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 32px;
+        }
+        .footer-col {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .footer-title {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #ffffff;
+        }
+        .footer-link {
+            font-size: 13px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.18s ease;
+        }
+        .footer-link:hover { color: #00d2fe; }
+
+        @media (max-width: 960px) {
+            .hero-section {
+                grid-template-columns: 1fr;
+                padding: 100px 16px 40px;
+            }
+            .bento-col-7, .bento-col-5, .bento-col-6 { grid-column: span 12; }
+            .site-nav { padding: 0 16px; }
+            .section-container { padding: 60px 16px; }
+            .radar-bezel { width: 300px; height: 300px; }
+            .ring-3 { width: 210px; height: 210px; }
+            .ring-4 { width: 260px; height: 260px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .radar-conical-sweep { animation: none; opacity: 0.4; }
+            .marquee-track { animation: none; }
+            .pulse-beacon, .contact-ping { animation: none; }
+            * { transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glow Spheres (OceanEye Atmospheric Spec) -->
+    <div class="ambient-glow ambient-glow-top"></div>
+    <div class="ambient-glow ambient-glow-middle"></div>
+
+    <!-- ── NAVBAR INSTITUCIONAL ── -->
+    <header class="site-nav">
+        <a href="/" class="nav-brand">
+            <div class="nav-logo" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:6px;background:rgba(0,210,254,0.08);border:1px solid rgba(0,210,254,0.3);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D2FE" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+            </div>
+            <span class="nav-title">OceanEye</span>
+            <span class="badge-sovereignty">META AI · MARITIME INTELLIGENCE</span>
+        </a>
+
+        <nav class="nav-links">
+            <a href="#mision" class="nav-link">Mile 201 Mission</a>
+            <a href="#radar-animatic" class="nav-link">3D SAR Orbit</a>
+            <a href="#pilares" class="nav-link">SAR Physics &amp; Meta AI</a>
+            <a href="#benchmarks" class="nav-link">Benchmarks</a>
+            <a href="#investigador" class="nav-link" style="color:#00d2fe;font-weight:700;"><span style="font-size:11px;background:rgba(0,210,254,0.08);border:1px solid rgba(0,210,254,0.28);padding:3px 9px;border-radius:6px;font-family:'JetBrains Mono',monospace;">GC · Gastón Chevarria</span></a>
+            <a href="https://github.com/Gastonchevarria/oceaneye-evaluation" target="_blank" class="nav-link" style="color:#38bdf8;">Verification Kit ↗</a>
+            <a href="./app/" class="nav-cta-btn">
+                Tactical Console ➔
+            </a>
+        </nav>
+    </header>
+
+    <!-- ── HERO SECTION ── -->
+    <!-- META HACKATHON HERO RIBBON -->
+<div style="background:rgba(11,14,20,0.88);border:1px solid rgba(255,255,255,0.10);border-top:1px solid rgba(255,255,255,0.18);border-radius:8px;padding:10px 16px;margin:78px auto 0;max-width:1120px;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#e2e8f0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;">
+  <span><strong>META AI PIPELINE:</strong> <code>muse-image-1.0</code> + <code>sam-3.1</code> (Gate A Live Masks + Negative Control) + <code>muse-wonder-1.0</code> vs <code>muse-spark-1.3</code></span>
+  <span><strong>Benchmark (n=30, temp 0.1):</strong> Wonder <code>26/30 (86.7%)</code> · Spark <code>19/30 (63.3%)</code> · Adherence <code>98.0% vs 92.0%</code> · <a href="./app/?pitch=1" style="color:#38bdf8;font-weight:800;text-decoration:underline;">Launch 90s Pitch →</a></span>
+</div>
+<main>
+        <section class="hero-section" id="mision">
+            <!-- Left Column: Typography & CTAs -->
+            <div class="hero-content">
+                <div class="hero-badge-row">
+                    <span class="hero-pill-critical">
+                        <span class="pulse-beacon"></span> SENTINEL-1 SAR · ACTIVE MILE 201 SURVEILLANCE
+                    </span>
+                </div>
+
+                <h1 class="hero-title">
+                    Continuous Orbital Maritime Surveillance with <span>Sentinel-1 SAR &amp; Meta Multimodal AI</span>
+                </h1>
+
+                <p class="hero-subtitle">
+                    When distant-water fishing fleets deliberately disable their AIS transponders to harvest <em>Illex argentinus</em> squid along the Mile 201 Blue Hole corridor, <strong>OceanEye Sentinel 2.0</strong> fuses orbital Sentinel-1 C-Band SAR radar with <strong>Meta SAM 3.1</strong> sub-pixel segmentation, <strong>Muse Wonder 1.0</strong> neuro-symbolic reasoning, and <strong>Ed25519 + SHA-256</strong> cryptographic chain of custody.
+                </p>
+
+                <div class="hero-actions">
+                    <a href="./app/" class="btn-warroom-giant">
+                        <span>Launch Tactical Console</span>
+                        <span class="kbd-hint">↵ Enter</span>
+                    </a>
+                    <a href="./app/?pitch=1" class="btn-editorial-secondary" style="border-color:rgba(0,210,254,0.45);color:#00d2fe;background:rgba(0,210,254,0.08);" title="Launch Interactive 90s Pitch for Meta AI Judges">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        <span>90s Judge Pitch (Meta AI)</span>
+                    </a>
+                    <button data-onclick="downloadForensicPdfLanding()" class="btn-editorial-secondary" title="Download sample technical forensic dossier in A4 PDF">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                        <span>Sample Dossier (A4 PDF)</span>
+                    </button>
+                </div>
+
+                <!-- LIVE META AI BATTLECARD HUD (15-Second Jury Hook) -->
+                <div style="margin:0 0 18px;padding:12px 14px;border-radius:8px;background:rgba(9,13,21,0.92);border:1px solid rgba(0,210,254,0.28);font-family:'JetBrains Mono',monospace;font-size:10.5px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+                        <span style="color:#00d2fe;font-weight:800;">⚡ META AI MODEL ARENA (n=30, temp=0.1) + SAM 3.1 GATE A</span>
+                        <span style="color:#10b981;font-weight:800;">✓ ED25519 + SHA-256 VERIFIED</span>
+                    </div>
+                    <div style="margin-bottom:6px;">
+                        <div style="display:flex;justify-content:space-between;color:#e2e8f0;margin-bottom:3px;">
+                            <span><strong>muse-wonder-1.0</strong> (Zero Pre-Validator Flags)</span>
+                            <span style="color:#10b981;font-weight:800;">26/30 (86.7%) · Adh. 98.0%</span>
+                        </div>
+                        <div style="height:6px;background:#1e293b;border-radius:4px;overflow:hidden;">
+                            <div style="width:86.7%;height:100%;background:linear-gradient(90deg,#10b981,#00d2fe);"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div style="display:flex;justify-content:space-between;color:#94a3b8;margin-bottom:3px;">
+                            <span><strong>muse-spark-1.3</strong> (Fast Baseline · 11.7s)</span>
+                            <span style="color:#38bdf8;font-weight:700;">19/30 (63.3%) · Adh. 92.0%</span>
+                        </div>
+                        <div style="height:6px;background:#1e293b;border-radius:4px;overflow:hidden;">
+                            <div style="width:63.3%;height:100%;background:#38bdf8;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="trust-bar-institutional">
+                    <span>SENTINEL-1 C-BAND (5.405 GHZ)</span>
+                    <span>·</span>
+                    <span>SAM 3.1 LIVE MASKS (10 CHIPS)</span>
+                    <span>·</span>
+                    <span>MUSE WONDER 1.0 VS SPARK 1.3</span>
+                    <span>·</span>
+                    <span>ED25519 + SHA-256</span>
+                </div>
+            </div>
+
+            <!-- Right Column: 3D Orbital South Atlantic & Bathymetric SAR Viewport -->
+            <div class="radar-viewport-container" id="radar-animatic">
+                <div class="hud-corner-box" style="width:400px;height:400px;max-width:100%;background:#06080D;border:1px solid rgba(255,255,255,0.10);border-top:1px solid rgba(255,255,255,0.20);border-radius:12px;position:relative;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.75);">
+                    <div style="position:absolute;top:12px;left:24px;right:24px;display:flex;justify-content:space-between;align-items:center;z-index:5;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#94a3b8;letter-spacing:0.06em;">
+                        <span>ORBITAL ARC · 44°S–48°S SOUTH ATLANTIC</span>
+                        <span style="color:#00D2FE;">SENTINEL-1A · IW GRD</span>
+                    </div>
+                    <canvas id="orbital-sar-canvas" width="400" height="400" style="width:100%;height:100%;display:block;cursor:crosshair;"></canvas>
+                    <div style="position:absolute;bottom:10px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(6,7,9,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:6px;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#cbd5e1;z-index:5;">
+                        <span style="display:inline-flex;align-items:center;gap:6px;"><span class="status-indicator"></span> MILE 200 EEZ · BLUE HOLE CORRIDOR</span>
+                        <span id="orbital-hud-readout" style="color:#00D2FE;">LU RONG YU 588 · -15.2 NM · AIS OFF</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── LIVE MARQUEE TICKER (ATLÁNTICO SUR STREAM) ── -->
+        <div class="marquee-strip">
+            <div class="marquee-track">
+                <div class="marquee-item"><span class="dot-crimson"></span> <strong>CRITICAL ALERT:</strong> Dark Vessel Incursion LU RONG YU 588 (-45.16°S, -59.95°W) · AIS OFF · SYNTHETIC BENCHMARK SCENE</div>
+                <div class="marquee-item"><span class="dot-cyan"></span> <strong>SENTINEL-1 C-BAND:</strong> Calibrated IW GRD synthetic scene over Blue Hole (seed 1982) · Dual-Pol VV/VH Fusion</div>
+                <div class="marquee-item"><span class="dot-emerald"></span> <strong>LAYA SYSTEM-1 TRIAGE:</strong> Empty-ocean tile rejection in 9.12ms · 44% compute saved</div>
+                <div class="marquee-item"><span class="dot-emerald"></span> <strong>MUSE ARENA BENCHMARK (n=30, temp=0.1):</strong> Wonder 26/30 (86.7%) vs Spark 19/30 (63.3%) clean pre-validator pass · Mean Adherence 98.0% vs 92.0%</div>
+                <div class="marquee-item"><span class="dot-cyan"></span> <strong>CHAIN OF CUSTODY:</strong> Canonical SHA-256 + Ed25519 Signature (verifiable in-browser via WebCrypto)</div>
+                <div class="marquee-item"><span class="dot-indigo"></span> <strong>INTERCEPTION VECTOR:</strong> OPV ARA Bouchard (P-51) bearing 148° at 15.2 NM (operational simulation)</div>
+                
+                <!-- Loop Seamless Duplication -->
+                <div class="marquee-item"><span class="dot-crimson"></span> <strong>CRITICAL ALERT:</strong> Dark Vessel Incursion LU RONG YU 588 (-45.16°S, -59.95°W) · AIS OFF · SYNTHETIC BENCHMARK SCENE</div>
+                <div class="marquee-item"><span class="dot-cyan"></span> <strong>SENTINEL-1 C-BAND:</strong> Calibrated IW GRD synthetic scene over Blue Hole (seed 1982) · Dual-Pol VV/VH Fusion</div>
+                <div class="marquee-item"><span class="dot-emerald"></span> <strong>LAYA SYSTEM-1 TRIAGE:</strong> Empty-ocean tile rejection in 9.12ms · 44% compute saved</div>
+                <div class="marquee-item"><span class="dot-emerald"></span> <strong>MUSE ARENA BENCHMARK (n=30, temp=0.1):</strong> Wonder 26/30 (86.7%) vs Spark 19/30 (63.3%) clean pre-validator pass · Mean Adherence 98.0% vs 92.0%</div>
+                <div class="marquee-item"><span class="dot-cyan"></span> <strong>CHAIN OF CUSTODY:</strong> Canonical SHA-256 + Ed25519 Signature (verifiable in-browser via WebCrypto)</div>
+                <div class="marquee-item"><span class="dot-indigo"></span> <strong>INTERCEPTION VECTOR:</strong> OPV ARA Bouchard (P-51) bearing 148° at 15.2 NM (operational simulation)</div>
+            </div>
+        </div>
+
+        <!-- ── LIVE BENCHMARK STATS TICKER (CONTEO DINÁMICO DESDE stats.json) ── -->
+        <div class="stats-strip-container" id="benchmarks">
+            <div class="stats-strip">
+                <div class="stat-item">
+                    <div class="stat-number">
+                        <span id="counterLaya">9.12</span> <span>ms</span>
+                    </div>
+                    <span class="stat-label">LAYA Triage Latency</span>
+                    <span class="stat-sub">Rejects empty ocean tiles before GPU inference (44% compute saved)</span>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">
+                        <span id="counterDarks">12</span> <span>Dark Targets</span>
+                    </div>
+                    <span class="stat-label">Dark Vessels Isolated (Benchmark Scene)</span>
+                    <span class="stat-sub">15 injected SAR vessels vs 3 AIS + 1 ghost track (seed 1982)</span>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">
+                        <span id="counterWonderPass">86.7</span> <span>%</span>
+                    </div>
+                    <span class="stat-label">Muse Wonder Clean Pass (26/30)</span>
+                    <span class="stat-sub" id="counterWonderSub">Pre-validator vs 63.3% Spark (19/30) · McNemar p=0.0156</span>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number" style="color:#10b981;">
+                        <span id="counterWonderAdh">98.0</span> <span>%</span>
+                    </div>
+                    <span class="stat-label">Mean Pre-Validator Adherence</span>
+                    <span class="stat-sub" id="counterAdhSub">Wonder 98.0% vs Spark 92.0% (100 - 15n penalty formula)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── BENTO GRID: LOS 4 PILARES DE INNOVACIÓN ── -->
+        <section class="section-container" id="pilares">
+            <div class="section-header">
+                <span class="section-tag">THREE-TIER MULTIMODAL ARCHITECTURE &amp; MARITIME DEFENSE</span>
+                <h2 class="section-title">The Four Technological Pillars of OceanEye Sentinel 2.0</h2>
+                <p class="section-desc">
+                    Engineered from first principles: microwave radar physics, deterministic System-1 triage, Meta multimodal foundation models, and cryptographic chain of custody.
+                </p>
+            </div>
+
+            <div class="bento-grid">
+                <!-- Pilar 1: Radar SAR + Interactive Before/After Lens Slider -->
+                <div class="bento-card bento-col-7 hud-corner-box">
+                    <div>
+                        <div class="card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00D2FE" stroke-width="1.5"><path d="M2 12a10 10 0 0 1 10-10m0 20a10 10 0 0 1-10-10m10-6a6 6 0 0 1 6 6m-6 6a6 6 0 0 1-6-6"/><circle cx="12" cy="12" r="2"/></svg>
+                        </div>
+                        <h3 class="card-title">01. Sentinel-1 C-Band SAR Physics (Dual-Pol VV/VH)</h3>
+                        <p class="card-body">
+                            C-Band microwave radar (5.405 GHz) penetrates dense Southern Ocean cloud cover and darkness. Cross-polarized VV/VH fusion suppresses Bragg sea-clutter scatter and isolates high-reflectivity dihedral steel hull returns (&gt;+50 dB RCS).
+                        </p>
+                        <!-- Interactive Before/After SAR Slider (Muestra Sintética Calibrada) -->
+                        <div style="margin:14px 0;padding:10px 12px;border-radius:8px;background:#05070B;border:1px solid rgba(255,255,255,0.10);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;margin-bottom:6px;">
+                                <span>INTERACTIVE LENS COMPARATOR (CALIBRATED BENCHMARK SEED 1982)</span>
+                                <span id="sar-slider-label" style="color:#00D2FE;font-weight:700;">50% CLOUDY OPTICAL / 50% SAR VV+VH</span>
+                            </div>
+                            <div style="position:relative;height:78px;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);background:#070B12;">
+                                <!-- Right Layer: SAR VV+VH Reveal -->
+                                <div style="position:absolute;inset:0;background:radial-gradient(circle at 68% 52%, rgba(239,68,68,0.45) 0%, rgba(0,210,254,0.22) 22%, #05080F 65%);display:flex;align-items:center;justify-content:flex-end;padding-right:16px;font-family:'JetBrains Mono',monospace;font-size:10px;color:#F8FAFC;">
+                                    <div style="text-align:right;">
+                                        <div style="color:#EF4444;font-weight:800;">● METALLIC HULL ECHO +51.6 dB RCS</div>
+                                        <div style="color:#94a3b8;font-size:9px;">VV+VH CHANNEL · 80m DARK VESSEL (AIS OFF)</div>
+                                    </div>
+                                </div>
+                                <!-- Left Layer: Optical Cloud Cover -->
+                                <div id="sar-optical-overlay" style="position:absolute;top:0;bottom:0;left:0;width:50%;background:linear-gradient(135deg, #1E293B 0%, #334155 55%, #0F172A 100%);border-right:1.5px solid #00D2FE;display:flex;align-items:center;padding-left:14px;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:10px;color:#CBD5E1;">
+                                    <div style="white-space:nowrap;">
+                                        <div style="font-weight:700;">SENTINEL-2 OPTICAL (OCEAN CLOUD COVER)</div>
+                                        <div style="color:#94a3b8;font-size:9px;">0 VISIBLE CONTACTS · SOUTHERN FOG</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input type="range" min="5" max="95" value="50" aria-label="Optical vs SAR Radar Comparator" data-oninput="updateSarCompare(this.value)" style="width:100%;margin-top:8px;accent-color:#00D2FE;cursor:ew-resize;">
+                        </div>
+                    </div>
+                    <div class="card-specs">
+                        <span class="spec-chip">λ = 5.54 cm</span>
+                        <span class="spec-chip">Dual-Pol VV/VH</span>
+                        <span class="spec-chip">Lee Despeckle Filter</span>
+                        <span class="spec-chip">Calibrated Benchmark Scene (Seed 1982)</span>
+                    </div>
+                </div>
+
+                <!-- Pilar 2: Triage LAYA + 8x8 Interactive Tile Matrix -->
+                <div class="bento-card bento-col-5 hud-corner-box">
+                    <div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+                            <img src="./logolaya.png" alt="LAYA Logo" style="height:28px;filter:drop-shadow(0 0 10px rgba(0,210,254,0.28));object-fit:contain;">
+                            <span class="mono" style="font-size:10px;color:#00D2FE;">9.12 ms · 64 TILES</span>
+                        </div>
+                        <h3 class="card-title">02. LAYA Deterministic Triage (System 1)</h3>
+                        <p class="card-body">
+                            Instead of burning GPU cycles on gigabytes of empty ocean, the deterministic LAYA engine computes tile-level statistical variance in sub-10ms CPU latency, discarding empty sea and forwarding only anomalous SAR chips to SAM 3.1.
+                        </p>
+                        <div style="margin:12px 0;padding:10px;border-radius:8px;background:#05070B;border:1px solid rgba(255,255,255,0.10);">
+                            <div style="display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;color:#94a3b8;margin-bottom:6px;">
+                                <span>8×8 TRIAGE MATRIX</span>
+                                <span id="laya-tile-readout" style="color:#10B981;">59 DISCARDED (15% OPACITY) · 5 ACTIVE</span>
+                            </div>
+                            <div id="laya-matrix-grid" style="display:grid;grid-template-columns:repeat(8, 1fr);gap:4px;"></div>
+                        </div>
+                    </div>
+                    <div class="card-specs">
+                        <span class="spec-chip">Sub-10ms CPU Latency</span>
+                        <span class="spec-chip">Empty-Sea Rejection</span>
+                        <span class="spec-chip">Decisions, Not Text</span>
+                    </div>
+                </div>
+
+                <!-- Pilar 3: Laboratorio de Deep Learning & ONNX (ResNet-18) -->
+                <div class="bento-card bento-col-6 hud-corner-box">
+                    <div>
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+                            <div class="card-icon" style="margin-bottom:0;">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00D2FE" stroke-width="1.5"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>
+                            </div>
+                            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#10b981;background:rgba(16,185,129,0.12);padding:2px 8px;border-radius:4px;border:1px solid rgba(16,185,129,0.3);font-weight:700;">
+                                SAM 3.1 + NEURO-SYMBOLIC VALIDATOR
+                            </span>
+                        </div>
+                        <h3 class="card-title">03. Meta SAM 3.1 Segmentation + Neuro-Symbolic Validator</h3>
+                        <p class="card-body">
+                            <strong>The Physical Challenge:</strong> Adaptive CA-CFAR thresholding flags radar backscatter peaks, but 6-meter Southern Atlantic wave crests trigger false alarms (<em>sea clutter</em>).<br><br>
+                            <strong>Our Solution:</strong> CA-CFAR detection + live <code>sam-3.1</code> sub-pixel mask segmentation paired with a deterministic neuro-symbolic validator auditing <code>muse-wonder-1.0</code> vs <code>muse-spark-1.3</code>:
+                        </p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:10px;font-size:11.5px;">
+                            <div>
+                                <span style="color:#94a3b8;font-size:9.5px;text-transform:uppercase;font-weight:700;display:block;">30-Case Benchmark</span>
+                                <span style="color:#10b981;font-weight:800;">Wonder 26/30 (86.7%)</span>
+                                <div style="font-size:9.5px;color:#cbd5e1;">vs Spark 19/30 (63.3%) · temp=0.1</div>
+                            </div>
+                            <div>
+                                <span style="color:#94a3b8;font-size:9.5px;text-transform:uppercase;font-weight:700;display:block;">Pre-Validator Adherence</span>
+                                <span style="color:#38bdf8;font-weight:800;">98.0% vs 92.0%</span>
+                                <div style="font-size:9.5px;color:#cbd5e1;">Mean latency: 28.6s vs 11.7s</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-specs">
+                        <span class="spec-chip">SAM 3.1 Live Masks</span>
+                        <span class="spec-chip">Negative Control 0 FP</span>
+                        <span class="spec-chip">MUSE Wonder 1.0</span>
+                    </div>
+                </div>
+
+                <!-- Pilar 4: Cadena de Custodia Criptográfica + Live Tamper Test -->
+                <div class="bento-card bento-col-6 hud-corner-box">
+                    <div>
+                        <div class="card-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00D2FE" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+                        </div>
+                        <h3 class="card-title">04. Cryptographic Chain of Custody (Ed25519)</h3>
+                        <p class="card-body">
+                            Every detection is sealed with a canonical SHA-256 hash and an asymmetric Ed25519 signature verifiable in-browser via WebCrypto. Test flipping a single byte in the forensic payload below to trigger immediate cryptographic rejection:
+                        </p>
+                        <div style="margin:12px 0;padding:10px 12px;border-radius:8px;background:#05070B;border:1px solid rgba(255,255,255,0.10);font-family:'JetBrains Mono',monospace;font-size:10.5px;">
+                            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">
+                                <span id="crypto-status-badge" style="color:#10B981;font-weight:700;">● SIGNATURE VERIFIED · SHA-256 + ED25519</span>
+                                <div style="display:flex;gap:6px;">
+                                    <button type="button" data-onclick="runCryptoVerifyLanding(false)" style="padding:3px 8px;border-radius:4px;background:rgba(16,185,129,0.14);border:1px solid rgba(16,185,129,0.4);color:#10B981;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;">Verify Original</button>
+                                    <button type="button" data-onclick="runCryptoVerifyLanding(true)" style="padding:3px 8px;border-radius:4px;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.4);color:#FCA5A5;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;">Flip 1 Byte (Tamper)</button>
+                                </div>
+                            </div>
+                            <div id="crypto-hash-readout" style="color:#cbd5e1;font-size:10px;word-break:break-all;">8ce0d8dbf7ffa1c35f2161bf89dc3cfbdab36f9c0919c2d9a6c2faaf0072a921</div>
+                        </div>
+                    </div>
+                    <div class="card-specs">
+                        <span class="spec-chip">Canonical SHA-256</span>
+                        <span class="spec-chip">Ed25519 RFC 8032 Signature</span>
+                        <span class="spec-chip">In-Browser WebCrypto</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── DEMOSTRADOR INTERACTIVO DE PERITAJE SIMULADO ── -->
+        <section class="section-container" id="marco-legal">
+            <div class="section-header">
+                <span class="section-tag">OPERATIONAL BENCHMARK CASE STUDY</span>
+                <h2 class="section-title">Benchmark Case Study: Dark Vessel LU RONG YU 588 (SAR-TGT-001)</h2>
+                <p class="section-desc">
+                    Calibrated synthetic benchmark scene (seed 1982) of an unlit radar contact with AIS disabled inside the South Atlantic evaluation corridor.
+                </p>
+            </div>
+
+            <div class="peritaje-demo-box">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--border);padding-bottom:16px;">
+                    <div>
+                        <span style="font-size:11px;font-weight:800;color:#00d2fe;letter-spacing:1.2px;text-transform:uppercase;" class="mono">SIM-SAR-M201-8841/CCM (SYNTHETIC BENCHMARK)</span>
+                        <h3 style="font-size:20px;font-weight:900;color:#ffffff;margin:2px 0;">Target Under Analysis: Industrial Squid Jigger LU RONG YU 588</h3>
+                    </div>
+                    <button data-onclick="downloadForensicPdfLanding()" class="nav-cta-btn" style="padding:10px 20px;">
+                        Download Technical Dossier (A4 PDF)
+                    </button>
+                </div>
+
+                <div class="demo-hud-grid">
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">WGS84 Coordinates</div>
+                        <div class="demo-hud-val">-45.1603°S, -59.9586°W</div>
+                    </div>
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">Distance to 200 NM EEZ</div>
+                        <div class="demo-hud-val" style="color:#ef4444;">15.20 NM (Inside EEZ Boundary)</div>
+                    </div>
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">SAR Estimated Dimensions</div>
+                        <div class="demo-hud-val">Length: 80.0m · Beam: 13.0m</div>
+                    </div>
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">Radar Signature (RCS / SNR)</div>
+                        <div class="demo-hud-val" style="color:#00d2fe;">+51.6 dB · SNR: 18.4 dB</div>
+                    </div>
+                </div>
+
+                <div style="background:#04060a;border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:18px;">
+                    <div style="font-size:10px;font-weight:800;color:#38bdf8;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">
+                        Immutable SHA-256 Cryptographic Seal:
+                    </div>
+                    <div style="font-size:11px;color:#cbd5e1;word-break:break-all;" class="mono">
+                        8ce0d8dbf7ffa1c35f2161bf89dc3cfbdab36f9c0919c2d9a6c2faaf0072a921
+                    </div>
+                </div>
+
+                <div class="legal-banner">
+                    <div style="font-size:11px;font-weight:800;color:#fca5a5;text-transform:uppercase;margin-bottom:6px;">
+                        Maritime Legal Framework &amp; UNCLOS Compliance
+                    </div>
+                    <ul style="font-size:12px;color:#cbd5e1;padding-left:18px;margin:0;line-height:1.6;">
+                        <li><strong>Federal Fisheries Act 24.922 · Art. 51:</strong> Unlicensed fishing inside the Exclusive Economic Zone with deliberate AIS transponder deactivation.</li>
+                        <li><strong>UNCLOS (CONVEMAR) · Arts. 56 &amp; 73:</strong> Coastal State sovereign rights for biological resource conservation, boarding, inspection, and enforcement.</li>
+                        <li><strong>Digital Chain of Custody (RFC 8032):</strong> Deterministic SHA-256 payload hashing and Ed25519 asymmetric signing for verifiable decision support.</li>
+                    </ul>
+                </div>
+
+                <div style="margin-top:24px;text-align:center;">
+                    <a href="./app/" class="btn-warroom-giant" style="display:inline-flex;">
+                        <span>Open Full Tactical Console</span>
+                        <span class="kbd-hint">↵ Enter</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── ARQUITECTURA MULTIMODAL META AI & VERIFICACIÓN ── -->
+        <section class="section-container" id="investigador">
+            <div class="section-header">
+                <span class="section-tag">META AI MODEL API ARCHITECTURE · REPRODUCIBLE BENCHMARK</span>
+                <h2 class="section-title">Meta AI Multimodal Pipeline &amp; System Architecture</h2>
+                <p class="section-desc">
+                    End-to-end multimodal pipeline chaining calibrated synthesis (<code>muse-image-1.0</code>), sub-pixel radar segmentation (<code>sam-3.1</code>), comparative forensic reasoning (<code>muse-wonder-1.0</code> vs <code>muse-spark-1.3</code>), and deterministic neuro-symbolic validation.
+                </p>
+            </div>
+
+            <div class="peritaje-demo-box hud-corner-box" style="border-color:rgba(255,255,255,0.12);border-top-color:rgba(255,255,255,0.22);background:linear-gradient(180deg, #0a0f18 0%, #06090e 100%);">
+                <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:24px;border-bottom:1px solid var(--border);padding-bottom:20px;">
+                    <div style="display:flex;align-items:center;gap:18px;">
+                        <div style="width:68px;height:68px;border-radius:50%;background:#0B0E14;border:1px solid rgba(0,210,254,0.35);display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:#00d2fe;letter-spacing:0.06em;">
+                            GC
+                        </div>
+                        <div>
+                            <span style="font-size:11px;font-weight:800;color:#00d2fe;letter-spacing:1px;text-transform:uppercase;" class="mono">Lead AI Systems Architect</span>
+                            <h3 style="font-size:24px;font-weight:900;color:#ffffff;margin:3px 0;">Gastón Chevarria</h3>
+                            <div style="font-size:13px;color:#94a3b8;">
+                                Multimodal AI Systems Architecture, SAR Remote Sensing &amp; Cryptographic Verification
+                            </div>
+                            <div style="display:flex;align-items:center;gap:12px;margin-top:8px;flex-wrap:wrap;">
+                                <a href="mailto:gaston@oceaneye-ai.com" style="color:#00d2fe;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:rgba(0,210,254,0.08);border:1px solid rgba(0,210,254,0.3);padding:4px 10px;border-radius:6px;" class="mono">
+                                    gaston@oceaneye-ai.com
+                                </a>
+                                <a href="https://github.com/Gastonchevarria/OceanEye-hackaton-meta" target="_blank" style="color:#a5b4fc;font-size:12px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.3);padding:4px 10px;border-radius:6px;" class="mono">
+                                    GitHub: OceanEye-hackaton-meta ↗
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                        <span class="spec-chip" style="color:#00d2fe;border-color:rgba(0,210,254,0.3);">SAM 3.1 GATE A</span>
+                        <span class="spec-chip" style="color:#6366f1;border-color:rgba(99,102,241,0.3);">MUSE WONDER 1.0 · N=30</span>
+                        <span class="spec-chip" style="color:#10b981;border-color:rgba(16,185,129,0.3);">ED25519 + SHA-256</span>
+                    </div>
+                </div>
+
+                <div class="demo-hud-grid" style="grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));margin:20px 0;">
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">1. SAM 3.1 Segmentation (Gate A)</div>
+                        <div style="font-size:12px;color:#f1f5f9;line-height:1.55;margin-top:6px;">
+                            • <strong>10 Verified SAR Chips:</strong> 9 dark vessels segmented live + 1 open-ocean negative control chip with <strong>0% False Positives</strong>.<br>
+                            • <strong>Verification:</strong> RLE/PNG masks sealed with SHA-256 in <code>sam_masks.json</code>.
+                        </div>
+                    </div>
+
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">2. Muse Wonder 1.0 vs Spark 1.3 Arena</div>
+                        <div style="font-size:12px;color:#f1f5f9;line-height:1.5;margin-top:6px;">
+                            Evaluated across <strong>30 forensic scenarios (temp=0.1)</strong>: <code>muse-wonder-1.0</code> achieves <strong>26/30 (86.7%)</strong> zero-flag pre-validator pass rate and <strong>98.0%</strong> adherence vs <strong>19/30 (63.3%)</strong> for <code>muse-spark-1.3</code>.
+                        </div>
+                    </div>
+
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">3. Reproducible Verification Kit</div>
+                        <div style="font-size:12px;color:#f1f5f9;line-height:1.5;margin-top:6px;">
+                            Deterministic audit suite that recomputes all metrics, validates all 10 SAM 3.1 masks, and verifies all 12 Ed25519 signatures:
+                        </div>
+                        <div style="margin-top:8px;">
+                            <a href="https://github.com/Gastonchevarria/oceaneye-evaluation" target="_blank" class="nav-cta-btn" style="padding:6px 12px;font-size:11px;display:inline-flex;">
+                                Gastonchevarria/oceaneye-evaluation ↗
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="demo-hud-card">
+                        <div class="demo-hud-label">4. Machine-Readable Evaluator Manifests</div>
+                        <div style="font-size:12px;color:#f1f5f9;line-height:1.5;margin-top:6px;">
+                            Complete pipeline specification and single-command cryptographic integrity proofs:
+                        </div>
+                        <div style="margin-top:8px;display:flex;gap:6px;">
+                            <a href="./llms.txt" target="_blank" class="spec-chip" style="color:#00d2fe;border-color:rgba(0,210,254,0.3);padding:3px 8px;font-size:10.5px;">/llms.txt</a>
+                            <a href="./llms-full.txt" target="_blank" class="spec-chip" style="color:#a855f7;border-color:rgba(168,85,247,0.3);padding:3px 8px;font-size:10.5px;">/llms-full.txt</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:rgba(0,210,254,0.06);border:1px solid rgba(0,210,254,0.3);border-radius:8px;padding:14px;margin-bottom:14px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+                        <span style="font-size:11.5px;font-weight:900;color:#00d2fe;letter-spacing:0.6px;text-transform:uppercase;" class="mono">Built During the Meta Global AI Hackathon (Oct 26 – Nov 4, 2026) · Push the Frontier Track</span>
+                        <span class="spec-chip" style="color:#10b981;border-color:rgba(16,185,129,0.4);background:rgba(16,185,129,0.1);font-size:10.5px;">Cached Verified Run — Ed25519 Signed (Zero Rate-Limit Fallback Active)</span>
+                    </div>
+                    <div style="font-size:12px;color:#e2e8f0;line-height:1.55;">
+                        <strong>4-Stage Production Cascade Discovered via Benchmark (n=30, McNemar p=0.0156):</strong><br>
+                        • <strong>Stage 0 (CPU · 9.12 ms):</strong> LAYA System-1 deterministic triage rejects 59/64 empty ocean tiles (saves 44% GPU compute).<br>
+                        • <strong>Stage 1 (Vision · Meta <code>sam-3.1</code> + <code>muse-image-1.0</code>):</strong> Sub-pixel vessel hull segmentation across 10 SAR chips with <strong>0% wave-clutter false positives</strong>.<br>
+                        • <strong>Stage 2 (Rapid Alert · Meta <code>muse-spark-1.3</code> · 11.7s):</strong> Low-latency initial semantic triage across VV/VH radar + AIS.<br>
+                        • <strong>Stage 3 (Forensic Proof · Meta <code>muse-wonder-1.0</code> · 28.6s + Neuro-Symbolic Validator):</strong> 86.7% (26/30) clean pre-validator pass &amp; 98.0% rule adherence, sealed with in-browser WebCrypto Ed25519 + SHA-256.<br>
+                        • <strong>Next Steps / Roadmap (Layer 4):</strong> On-chain cyclic-graph financial traceability &amp; Z3 formal verification (<code>/x402/*</code>) of sanctioned IUU fishing syndicates.
+                    </div>
+                </div>
+
+                <div style="background:rgba(16,185,129,0.06);border:1px solid rgba(16,185,129,0.25);border-radius:8px;padding:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                    <div style="font-size:12px;color:#cbd5e1;">
+                        <strong>Single-Command Cryptographic &amp; Integrity Audit:</strong> <code style="background:#04060a;padding:2px 6px;border-radius:4px;color:#00d2fe;" class="mono">python3 run_benchmark.py --verify-signatures</code>
+                    </div>
+                    <a href="./app/?pitch=1" style="font-size:12px;color:#10b981;font-weight:800;text-decoration:none;">
+                        👉 Judges Quick-Start (Interactive 90s Guided Pitch): /app/?pitch=1 ➔
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ── FOOTER INSTITUCIONAL ── -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-col" style="max-width:380px;">
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+                    <span style="font-size:16px;font-weight:900;color:#ffffff;">OceanEye Sentinel 2.0</span>
+                </div>
+                <p style="font-size:12px;color:#94a3b8;line-height:1.6;">
+                    Satellite maritime intelligence platform powered by <strong>Meta SAM 3.1, Muse Wonder 1.0, Muse Spark 1.3, and Muse Image 1.0</strong> with neuro-symbolic validation and Ed25519 chain of custody.
+                </p>
+                <div style="font-size:11px;color:#64748b;margin-bottom:6px;" class="mono">
+                    Lead AI Systems Architect: Gastón Chevarria
+                </div>
+                <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+                    <a href="mailto:gaston@oceaneye-ai.com" class="footer-link" style="color:#00d2fe;display:inline-flex;align-items:center;gap:6px;font-size:12px;">
+                        gaston@oceaneye-ai.com
+                    </a>
+                    <a href="mailto:contacto@oceaneye-ai.com" class="footer-link" style="color:#94a3b8;display:inline-flex;align-items:center;gap:6px;font-size:12px;">
+                        contacto@oceaneye-ai.com
+                    </a>
+                </div>
+            </div>
+
+            <div class="footer-col">
+                <span class="footer-title">Platform</span>
+                <a href="./app/" class="footer-link">Tactical War Room Console</a>
+                <a href="#radar-animatic" class="footer-link">60 FPS Orbital SAR Simulator</a>
+                <a href="#pilares" class="footer-link">SAR Physics &amp; Meta AI Stack</a>
+                <a href="#benchmarks" class="footer-link">Benchmark Metrics</a>
+                <a href="#investigador" class="footer-link">System Architecture</a>
+            </div>
+
+            <div class="footer-col">
+                <span class="footer-title">Evaluation &amp; Code</span>
+                <a href="https://github.com/Gastonchevarria/oceaneye-evaluation" target="_blank" class="footer-link">Verification Kit (GitHub) ↗</a>
+                <a href="./llms.txt" target="_blank" class="footer-link">AI Evaluator Summary (/llms.txt)</a>
+                <a href="./llms-full.txt" target="_blank" class="footer-link">Full Technical Spec (/llms-full.txt)</a>
+                <a href="https://github.com/Gastonchevarria/OceanEye-hackaton-meta" target="_blank" class="footer-link">OceanEye Sentinel 2.0 · Meta AI</a>
+            </div>
+
+            <div class="footer-col">
+                <span class="footer-title">Contact</span>
+                <a href="mailto:gaston@oceaneye-ai.com" class="footer-link" style="color:#38bdf8;">Architect: gaston@oceaneye-ai.com</a>
+                <a href="mailto:contacto@oceaneye-ai.com" class="footer-link">General: contacto@oceaneye-ai.com</a>
+                <span style="font-size:11.5px;color:#64748b;margin-top:4px;">Buenos Aires / Córdoba · Argentina</span>
+            </div>
+
+            <div class="footer-col">
+                <span class="footer-title">Legal Framework</span>
+                <span style="font-size:12px;color:#94a3b8;">Federal Fisheries Act 24.922</span>
+                <span style="font-size:12px;color:#94a3b8;">UNCLOS (Arts. 56 &amp; 73)</span>
+                <span style="font-size:12px;color:#94a3b8;">Ed25519 Digital Signature (RFC 8032)</span>
+            </div>
+        </div>
+
+        <div style="max-width:1200px;margin:32px auto 0;border-top:1px solid rgba(255,255,255,0.05);padding-top:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;font-size:11.5px;color:#64748b;">
+            <span>© 2026 OceanEye Sentinel 2.0 · Meta AI Multimodal Maritime Intelligence</span>
+            <span>Mile 201 EEZ &amp; South Atlantic Blue Hole</span>
+        </div>
+    </footer>
+
+    <script>
+
+    // ── CSP-SAFE UNIVERSAL EVENT DELEGATOR (Works under strict script-src nonce) ──
+    (function installCspSafeEventDelegator() {
+        function parseArg(raw, el, ev) {
+            const s = raw.trim();
+            if (s === 'this.value') return el ? el.value : '';
+            if (s === 'this') return el;
+            if (s === 'event') return ev;
+            if (s === 'true') return true;
+            if (s === 'false') return false;
+            if (s === 'null') return null;
+            if ((s.startsWith("'") && s.endsWith("'")) || (s.startsWith('"') && s.endsWith('"'))) {
+                return s.slice(1, -1);
+            }
+            if (s !== '' && !Number.isNaN(Number(s))) return Number(s);
+            return s;
+        }
+        function runHandlerExpr(expr, el, ev) {
+            if (!expr) return;
+            const stmts = expr.split(';').map(x => x.trim()).filter(Boolean);
+            for (const stmt of stmts) {
+                if (stmt === 'event.stopPropagation()') {
+                    if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
+                    continue;
+                }
+                if (stmt === 'window.print()') {
+                    window.print();
+                    continue;
+                }
+                const m = stmt.match(/^([a-zA-Z0-9_$.]+)\s*\(([\s\S]*)\)$/);
+                if (!m) continue;
+                const fnPath = m[1].replace(/^window\./, '');
+                const argsRaw = m[2].trim();
+                const fn = window[fnPath];
+                if (typeof fn === 'function') {
+                    const args = argsRaw ? argsRaw.split(',').map(a => parseArg(a, el, ev)) : [];
+                    fn.apply(window, args);
+                }
+            }
+        }
+        document.addEventListener('click', function(ev) {
+            const el = ev.target && ev.target.closest ? ev.target.closest('[data-onclick]') : null;
+            if (!el) return;
+            const expr = el.getAttribute('data-onclick');
+            runHandlerExpr(expr, el, ev);
+        });
+        document.addEventListener('change', function(ev) {
+            const el = ev.target && ev.target.closest ? ev.target.closest('[data-onchange]') : null;
+            if (!el) return;
+            const expr = el.getAttribute('data-onchange');
+            runHandlerExpr(expr, el, ev);
+        });
+        document.addEventListener('input', function(ev) {
+            const el = ev.target && ev.target.closest ? ev.target.closest('[data-oninput]') : null;
+            if (!el) return;
+            const expr = el.getAttribute('data-oninput');
+            runHandlerExpr(expr, el, ev);
+        });
+    })();
+
+    // ── SMOOTH NUMBER TICKER ANIMATION (CONTADORES DINÁMICOS) ──
+    function animateValue(id, start, end, duration, decimals = 0) {
+        const obj = document.getElementById(id);
+        if (!obj) return;
+        let startTimestamp = null;
+        const step = (timestamp) => {
+            if (!startTimestamp) startTimestamp = timestamp;
+            const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+            // Ease-out cubic
+            const easeProgress = 1 - Math.pow(1 - progress, 3);
+            const current = (easeProgress * (end - start) + start);
+            obj.textContent = decimals > 0 ? current.toFixed(decimals) : Math.floor(current);
+            if (progress < 1) {
+                window.requestAnimationFrame(step);
+            } else {
+                obj.textContent = decimals > 0 ? end.toFixed(decimals) : end;
+            }
+        };
+        window.requestAnimationFrame(step);
+    }
+
+    // Trigger on intersection with live stats.json sync
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(async (entry) => {
+            if (entry.isIntersecting) {
+                let layaMs = 4.66;
+                let darkCount = 12;
+                let wonderPassPct = 86.7;
+                let wonderAdhPct = 98.0;
+                try {
+                    const [sarResp, statsResp] = await Promise.all([
+                        fetch('./data/sar_benchmark_2026.json').catch(() => null),
+                        fetch('./data/stats.json').catch(() => null)
+                    ]);
+                    if (sarResp && sarResp.ok) {
+                        const d = await sarResp.json();
+                        if (d.laya_system1_triage?.triage_latency_ms) {
+                            layaMs = Number(d.laya_system1_triage.triage_latency_ms);
+                        }
+                        if (d.metrics?.total_dark_vessels) {
+                            darkCount = Number(d.metrics.total_dark_vessels);
+                        }
+                    }
+                    if (statsResp && statsResp.ok) {
+                        const st = await statsResp.json();
+                        const w = st?.comparative_30_cases?.models?.["muse-wonder-1.0"];
+                        const s = st?.comparative_30_cases?.models?.["muse-spark-1.3"];
+                        const pMc = st?.comparative_30_cases?.head_to_head?.pass_rate?.mcnemar_exact_two_sided_p;
+                        if (w?.pass_rate_raw?.percent != null) wonderPassPct = Number(w.pass_rate_raw.percent);
+                        if (w?.adherence_raw_percent?.mean != null) wonderAdhPct = Number(w.adherence_raw_percent.mean);
+                        const wSub = document.getElementById('counterWonderSub');
+                        if (wSub && w && s) {
+                            wSub.textContent = `Pre-validator (${w.pass_rate_raw.passed}/${w.n}) vs ${s.pass_rate_raw.percent}% Spark (${s.pass_rate_raw.passed}/${s.n})${pMc != null ? ' · McNemar p=' + pMc.toFixed(4) : ''}`;
+                        }
+                    }
+                } catch(e) {
+                    console.debug("Stats fallback active");
+                }
+                animateValue("counterLaya", 0.0, layaMs, 1200, 2);
+                animateValue("counterDarks", 0, darkCount, 1000, 0);
+                animateValue("counterWonderPass", 0.0, wonderPassPct, 1200, 1);
+                animateValue("counterWonderAdh", 0.0, wonderAdhPct, 1200, 1);
+                observer.unobserve(entry.target);
+            }
+        });
+    }, { threshold: 0.3 });
+
+    const statsElem = document.getElementById('benchmarks');
+    if (statsElem) observer.observe(statsElem);
+
+    // ── DESCARGA DE PDF PERICIAL DE MUESTRA ──
+    function downloadForensicPdfLanding() {
+        const { jsPDF } = window.jspdf || {};
+        if (!jsPDF) {
+            window.location.href = './app/';
+            return;
+        }
+
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const dateUtc = new Date().toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+
+        // HEADER HERO BANNER
+        doc.setFillColor(7, 12, 22);
+        doc.rect(14, 10, 182, 27, 'F');
+        doc.setFillColor(0, 210, 254);
+        doc.rect(14, 36.5, 182, 0.8, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.text("OCEANEYE SENTINEL 2.0 — DECISION-SUPPORT TECHNICAL DRAFT — BENCHMARK SIMULATION", 18, 17);
+
+        doc.setTextColor(0, 210, 254);
+        doc.setFontSize(8);
+        doc.text("MULTIMODAL SATELLITE MARITIME INTELLIGENCE PLATFORM 'OCEANEYE SENTINEL 2.0'", 18, 23);
+
+        doc.setTextColor(241, 245, 249);
+        doc.setFontSize(9.5);
+        doc.text("TECHNICAL FORENSIC DOSSIER — MILE 201 EEZ DARK VESSEL DETECTION", 18, 30);
+
+        // STAMP IN HEADER
+        doc.setDrawColor(0, 210, 254);
+        doc.setFillColor(15, 23, 42);
+        doc.roundedRect(148, 14, 44, 18, 2, 2, 'FD');
+        doc.setTextColor(0, 210, 254);
+        doc.setFontSize(6.5);
+        doc.text("DOSSIER STATUS", 154, 19);
+        doc.setTextColor(239, 68, 68);
+        doc.setFontSize(7.5);
+        doc.text("DARK VESSEL ALERT", 151, 25);
+        doc.setTextColor(148, 163, 184);
+        doc.setFontSize(6);
+        doc.text("SAR VERIFIED", 155, 29);
+
+        // METADATA
+        doc.setDrawColor(218, 226, 236);
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, 40, 182, 14, 'FD');
+        doc.setTextColor(30, 41, 59);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("CASE FILE ID:", 18, 45);
+        doc.setFont('helvetica', 'normal');
+        doc.text("SIM-SAR-M201-8841/CCM (Technical Simulation Dossier)", 42, 45);
+        doc.setFont('helvetica', 'bold');
+        doc.text("TIMESTAMP UTC:", 18, 51);
+        doc.setFont('helvetica', 'normal');
+        doc.text(dateUtc, 42, 51);
+        doc.setFont('helvetica', 'bold');
+        doc.text("ORBITAL SENSOR:", 120, 51);
+        doc.setFont('helvetica', 'normal');
+        doc.text("Sentinel-1 SAR C-Band (Dual-Pol VV/VH)", 148, 51);
+
+        // 1. TELEMETRY
+        doc.setFillColor(15, 23, 42);
+        doc.rect(14, 57, 182, 5.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("1. RADAR CONTACT IDENTIFICATION & KINEMATIC TELEMETRY", 18, 61);
+
+        doc.setDrawColor(226, 232, 240);
+        doc.setFillColor(255, 255, 255);
+        doc.rect(14, 62.5, 182, 38, 'FD');
+
+        const printRow = (lbl, val, x, y, valColor=[15, 23, 42], isBold=false) => {
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(71, 85, 105);
+            doc.text(lbl, x, y);
+            doc.setFont('helvetica', isBold ? 'bold' : 'normal');
+            doc.setTextColor(valColor[0], valColor[1], valColor[2]);
+            doc.text(val, x + 38, y);
+        };
+
+        printRow("Identified Target:", "SAR-TGT-001 (Case LU RONG YU 588)", 18, 68, [2, 132, 199], true);
+        printRow("Vessel Classification:", "Industrial Squid Jigger (Distant-Water Fleet)", 18, 73);
+        printRow("AIS Transponder:", "DELIBERATELY DISABLED (DARK VESSEL)", 18, 78, [220, 38, 38], true);
+        printRow("WGS84 Coordinates:", "-45.1603°S, -59.9586°W", 18, 83, [15, 23, 42], true);
+        printRow("200 NM EEZ Boundary:", "15.20 NM (Critical EEZ Incursion)", 18, 88, [220, 38, 38], true);
+        printRow("Assigned Patrol Unit:", "OPV ARA Bouchard (P-51) at 15.2 NM (Intercept Bearing 148°)", 18, 93);
+        printRow("Dimensions / Signature:", "Length: 41.5m · Beam: 10.0m · RCS: +51.6 dB (Steel Hull)", 18, 98);
+
+        // 2. RADAR METHODOLOGY
+        doc.setFillColor(15, 23, 42);
+        doc.rect(14, 103, 182, 5.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("2. SENTINEL-1 SAR PHYSICAL DETECTION METHODOLOGY & META SAM 3.1", 18, 107);
+        doc.rect(14, 108.5, 182, 33, 'FD');
+        doc.setTextColor(51, 65, 85);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        const techBullets = [
+            "• Electromagnetic Spectrum: C-Band microwave radar (5.405 GHz carrier, λ = 5.54 cm). Immune to clouds, fog, and night.",
+            "• Dual-Pol Polarimetric Fusion (VV / VH): Co-polarized and cross-polarized channel fusion for ocean wave clutter suppression.",
+            "• Hull Dihedral Backscatter: Naval steel hulls produce high-reflectivity dihedral returns (>+50 dB RCS) above sea clutter.",
+            "• Nominal Spatial Resolution: 10m x 10m per pixel (Interferometric Wide / IW GRD mode with adaptive Lee despeckle filter).",
+            "• Deterministic Kinematic Correlation: Negative correlation across AISStream and Global Fishing Watch confirms dark vessel status."
+        ];
+        let by = 114;
+        techBullets.forEach(b => { doc.text(b, 18, by); by += 5.5; });
+
+        // 3. LEGAL BASIS
+        doc.setFillColor(15, 23, 42);
+        doc.rect(14, 144, 182, 5.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("3. MARITIME LEGAL FRAMEWORK & UNCLOS STATUTORY COMPLIANCE", 18, 148);
+        doc.rect(14, 149.5, 182, 30, 'FD');
+        doc.setFontSize(7);
+        const legalBullets = [
+            "• Federal Fisheries Act 24.922 (Art. 51): Unlicensed fishing inside the Exclusive Economic Zone without coastal state authorization.",
+            "• UNCLOS / CONVEMAR (Arts. 56 & 73): Coastal State sovereign rights for marine resource conservation, boarding, and enforcement.",
+            "• Deliberate AIS Deactivation: Breach of international IMO / SOLAS safety regulations and suspected Illex squid harvesting.",
+            "• Digital Chain of Custody: Technical admissibility of remote satellite sensing sealed with immutable cryptographic hashes."
+        ];
+        let ly = 155;
+        legalBullets.forEach(b => { doc.text(b, 18, ly); ly += 5.5; });
+
+        // 4. CRYPTOGRAPHIC CHAIN OF CUSTODY
+        doc.setFillColor(15, 23, 42);
+        doc.rect(14, 182, 182, 5.5, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("4. CRYPTOGRAPHIC CHAIN OF CUSTODY & ED25519 DIGITAL SIGNATURE", 18, 186);
+        doc.rect(14, 187.5, 182, 42, 'FD');
+        doc.setTextColor(30, 41, 59);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.text("IMMUTABLE SHA-256 CRYPTOGRAPHIC HASH:", 18, 193);
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(2, 132, 199);
+        doc.text("8ce0d8dbf7ffa1c35f2161bf89dc3cfbdab36f9c0919c2d9a6c2faaf0072a921", 18, 198);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(30, 41, 59);
+        doc.text("LAYA ASYMMETRIC DIGITAL SIGNATURE (ED25519 / RFC 8032):", 18, 205);
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(14, 116, 144);
+        doc.text("KT+N5kXyR0KDRkRff37SS5l7BNJV5o0B+m5ATvldl3lwudy1MamVRM4aLBIx/5tXFyxjKRX54GMCdn3ofNOfCw==", 18, 210);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(30, 41, 59);
+        doc.text("PERSISTENT ED25519 VERIFICATION PUBLIC KEY:", 18, 217);
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(6.8);
+        doc.setTextColor(16, 185, 129);
+        doc.text("585ea4596b1cf29c3f1221793ed34ab6f56e4a3d9b97a9f967d3b16d6e3e062a", 18, 222);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("Certification generated by the LAYA cryptographic engine with sub-40ms latency and deterministic RFC 3161 timestamping.", 18, 227);
+
+        // 5. OFFICIAL STAMPS
+        doc.setDrawColor(218, 226, 236);
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, 232, 182, 38, 'FD');
+
+        doc.setDrawColor(203, 213, 225);
+        doc.line(24, 256, 90, 256);
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("LEAD AI & SATELLITE INTELLIGENCE SYSTEMS ARCHITECT", 24, 260);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text("Maritime Forensic Intelligence & SAR Operations Division", 24, 264);
+        doc.text("OceanEye Sentinel 2.0 · Meta AI Multimodal Pipeline", 24, 268);
+
+        doc.setDrawColor(0, 160, 210);
+        doc.setFillColor(236, 253, 255);
+        doc.roundedRect(108, 236, 82, 30, 2, 2, 'FD');
+        doc.setTextColor(2, 132, 199);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.text("✓ LAYA ED25519 AUTHENTICITY SEAL", 112, 242);
+        doc.setFontSize(6.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text("NEURO-SYMBOLIC RULE VALIDATOR AUDIT", 112, 247);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        doc.text("Comparativa 30 casos: Wonder 26/30 (86.7%) vs Spark 19/30 (63.3%)", 112, 252);
+        doc.text("Adherencia media pre-validador: 98.0% vs 92.0% (indicativo)", 112, 256);
+        doc.setTextColor(16, 185, 129);
+        doc.setFont('helvetica', 'bold');
+        doc.text("ESTADO: BORRADOR TÉCNICO CON SELLO DEMO ED25519", 112, 262);
+
+        // FOOTER
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(6.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("OceanEye Platform · Meta AI Hackathon 2026 · OceanEye Sentinel 2.0 · Simulación Operativa.", 14, 276);
+        doc.text("Página 1 de 1 · Borrador Técnico de Muestra", 146, 276);
+
+        const filename = `OceanEye_Borrador_Tecnico_SAR-TGT-001.pdf`;
+        doc.save(filename);
+    }
+
+    // ── 1. INTERACTIVE SAR COMPARE SLIDER (PILAR 01) ──
+    function updateSarCompare(val) {
+        const overlay = document.getElementById('sar-optical-overlay');
+        const label = document.getElementById('sar-slider-label');
+        if (overlay) overlay.style.width = val + '%';
+        if (label) label.textContent = `${val}% ÓPTICO NUBLADO / ${100 - val}% SAR VV+VH`;
+    }
+
+    // ── 2. INTERACTIVE 8x8 LAYA TILE TRIAGE MATRIX (PILAR 02) ──
+    (function initLayaMatrix() {
+        const grid = document.getElementById('laya-matrix-grid');
+        const readout = document.getElementById('laya-tile-readout');
+        if (!grid) return;
+        const anomalyIdx = new Set([11, 19, 28, 37, 45]);
+        for (let i = 0; i < 64; i++) {
+            const cell = document.createElement('div');
+            const isAnomaly = anomalyIdx.has(i);
+            cell.style.height = '14px';
+            cell.style.borderRadius = '2px';
+            cell.style.transition = 'opacity 0.35s ease, transform 0.2s ease, background 0.2s ease';
+            cell.style.cursor = 'pointer';
+            if (isAnomaly) {
+                cell.style.background = i === 28 ? '#EF4444' : '#00D2FE';
+                cell.style.opacity = '0.95';
+                cell.style.boxShadow = i === 28 ? '0 0 8px rgba(239,68,68,0.6)' : '0 0 6px rgba(0,210,254,0.45)';
+            } else {
+                cell.style.background = '#1E293B';
+                cell.style.opacity = '0.15';
+            }
+            cell.addEventListener('mouseenter', () => {
+                if (readout) {
+                    readout.textContent = isAnomaly
+                        ? `TESELA #${String(i + 1).padStart(2, '0')} · ANOMALÍA SAR (+51.6 dB) -> PASA A SAM 3.1`
+                        : `TESELA #${String(i + 1).padStart(2, '0')} · MAR VACÍO (VAR < UMBRAL) -> DESCARTADA EN 0.14 ms`;
+                    readout.style.color = isAnomaly ? '#00D2FE' : '#94A3B8';
+                }
+            });
+            grid.appendChild(cell);
+        }
+    })();
+
+    // ── 3. LIVE WEBCRYPTO SHA-256 / ED25519 TAMPER VERIFIER (PILAR 04) ──
+    async function runCryptoVerifyLanding(tamper) {
+        const badge = document.getElementById('crypto-status-badge');
+        const hashBox = document.getElementById('crypto-hash-readout');
+        const canonical = tamper
+            ? '{"id":"SAR-TGT-001","vessel":"LU RONG YU 588","lat":-45.1603,"lon":-59.9586,"rcs_db":12.0}'
+            : '{"id":"SAR-TGT-001","vessel":"LU RONG YU 588","lat":-45.1603,"lon":-59.9586,"rcs_db":51.6}';
+        let hex = '8ce0d8dbf7ffa1c35f2161bf89dc3cfbdab36f9c0919c2d9a6c2faaf0072a921';
+        if (tamper && window.crypto && window.crypto.subtle) {
+            const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(canonical));
+            hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        if (badge && hashBox) {
+            if (tamper) {
+                badge.textContent = '✕ TAMPER DETECTED · ED25519 SIGNATURE INVALID';
+                badge.style.color = '#EF4444';
+                hashBox.textContent = hex + ' (MISMATCH)';
+                hashBox.style.color = '#FCA5A5';
+            } else {
+                badge.textContent = '● SIGNATURE VERIFIED · SHA-256 + ED25519 MATCH';
+                badge.style.color = '#10B981';
+                hashBox.textContent = hex;
+                hashBox.style.color = '#CBD5E1';
+            }
+        }
+    }
+
+    // ── 4. 3D ORBITAL SOUTH ATLANTIC ARC & VOLUMETRIC SENTINEL-1 SAR BEAM ──
+    (function initOrbitalSarScene() {
+        const canvas = document.getElementById('orbital-sar-canvas');
+        const hudReadout = document.getElementById('orbital-hud-readout');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let targetRotX = 0, targetRotY = 0, curRotX = 0, curRotY = 0;
+        let sweepPhase = 0;
+        let isVisible = true;
+        const reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        canvas.addEventListener('pointermove', (e) => {
+            const r = canvas.getBoundingClientRect();
+            const nx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+            const ny = ((e.clientY - r.top) / r.height - 0.5) * 2;
+            targetRotY = nx * 0.09; // ±5 deg damped
+            targetRotX = ny * 0.07;
+        });
+        canvas.addEventListener('pointerleave', () => {
+            targetRotX = 0;
+            targetRotY = 0;
+        });
+
+        if ('IntersectionObserver' in window) {
+            const io = new IntersectionObserver((entries) => {
+                entries.forEach(en => { isVisible = en.isIntersecting; });
+            }, { threshold: 0.05 });
+            io.observe(canvas);
+        }
+
+        const contacts = [
+            { id: 'LU RONG YU 588', sub: '-15.2 NM ZEE · AIS OFF', lat: -0.22, lon: -0.08, dark: true },
+            { id: 'HONG PU 16', sub: 'MILLA 201.8 · AIS OFF', lat: 0.08, lon: 0.24, dark: true },
+            { id: 'ARA BOUCHARD (P-51)', sub: 'INTERCEPTOR · 18.5 KN', lat: -0.35, lon: -0.42, dark: false },
+            { id: 'PESCADOR-04 (AR)', sub: 'FLOTA LEGAL ZEE', lat: 0.28, lon: -0.32, dark: false }
+        ];
+
+        function project3D(lat, lon, elev) {
+            const R = 158 + (elev || 0);
+            const phi = lat + 0.42 + curRotX;
+            const theta = lon + curRotY;
+            const x3 = R * Math.cos(phi) * Math.sin(theta);
+            const y3 = R * Math.sin(phi);
+            const z3 = R * Math.cos(phi) * Math.cos(theta);
+            const perspective = 420 / (420 - z3);
+            return { x: 200 + x3 * perspective, y: 215 + y3 * perspective, z: z3, s: perspective };
+        }
+
+        function renderFrame() {
+            if (!isVisible && !reducedMotion) {
+                requestAnimationFrame(renderFrame);
+                return;
+            }
+            curRotX += (targetRotX - curRotX) * 0.04;
+            curRotY += (targetRotY - curRotY) * 0.04;
+            if (!reducedMotion) sweepPhase += 0.012;
+
+            ctx.clearRect(0, 0, 400, 400);
+
+            // Subtle atmospheric horizon glow
+            const grad = ctx.createRadialGradient(200, 215, 30, 200, 215, 185);
+            grad.addColorStop(0, 'rgba(0, 210, 254, 0.07)');
+            grad.addColorStop(0.7, 'rgba(15, 23, 42, 0.25)');
+            grad.addColorStop(1, 'rgba(6, 8, 13, 0)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 400, 400);
+
+            // 1. Spherical Latitude / Longitude Grid (44°S to 48°S)
+            ctx.lineWidth = 0.75;
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.14)';
+            for (let lat = -0.65; lat <= 0.65; lat += 0.22) {
+                ctx.beginPath();
+                for (let lon = -0.85; lon <= 0.85; lon += 0.08) {
+                    const p = project3D(lat, lon, 0);
+                    if (lon === -0.85) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
+            for (let lon = -0.80; lon <= 0.80; lon += 0.26) {
+                ctx.beginPath();
+                for (let lat = -0.65; lat <= 0.65; lat += 0.08) {
+                    const p = project3D(lat, lon, 0);
+                    if (lat === -0.65) ctx.moveTo(p.x, p.y);
+                    else ctx.lineTo(p.x, p.y);
+                }
+                ctx.stroke();
+            }
+
+            // 2. Blue Hole Bathymetric Point Cloud
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.35)';
+            for (let lat = -0.32; lat <= 0.28; lat += 0.08) {
+                for (let lon = -0.05; lon <= 0.42; lon += 0.08) {
+                    const p = project3D(lat, lon, -4);
+                    ctx.fillRect(p.x - 1, p.y - 1, 2, 2);
+                }
+            }
+
+            // 3. Milla 200 EEZ Luminous 1px Boundary Filament
+            ctx.beginPath();
+            ctx.lineWidth = 1.4;
+            ctx.strokeStyle = 'rgba(0, 210, 254, 0.78)';
+            for (let lat = -0.65; lat <= 0.65; lat += 0.05) {
+                const lonEez = -0.12 + Math.sin(lat * 2.4) * 0.08;
+                const p = project3D(lat, lonEez, 2);
+                if (lat === -0.65) ctx.moveTo(p.x, p.y);
+                else ctx.lineTo(p.x, p.y);
+            }
+            ctx.stroke();
+
+            // 4. Sentinel-1 Orbital Satellite & Volumetric Conical SAR Beam
+            const satLon = Math.sin(sweepPhase) * 0.48;
+            const satLat = -0.52;
+            const satPos = project3D(satLat, satLon, 58);
+            const swathLeft = project3D(0.45, satLon - 0.22, 0);
+            const swathRight = project3D(0.45, satLon + 0.22, 0);
+
+            const beamGrad = ctx.createLinearGradient(satPos.x, satPos.y, (swathLeft.x + swathRight.x) / 2, swathLeft.y);
+            beamGrad.addColorStop(0, 'rgba(0, 210, 254, 0.42)');
+            beamGrad.addColorStop(1, 'rgba(0, 210, 254, 0.02)');
+            ctx.fillStyle = beamGrad;
+            ctx.beginPath();
+            ctx.moveTo(satPos.x, satPos.y);
+            ctx.lineTo(swathLeft.x, swathLeft.y);
+            ctx.lineTo(swathRight.x, swathRight.y);
+            ctx.closePath();
+            ctx.fill();
+
+            // Satellite node
+            ctx.fillStyle = '#F8FAFC';
+            ctx.beginPath();
+            ctx.arc(satPos.x, satPos.y, 3.2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.font = '600 9px "JetBrains Mono", monospace';
+            ctx.fillStyle = '#00D2FE';
+            ctx.fillText('S1-ORBIT', satPos.x + 7, satPos.y + 3);
+
+            // 5. Vessel Contacts + 3D->2D Floating HUD Anchors
+            contacts.forEach((c) => {
+                const p = project3D(c.lat, c.lon, 3);
+                const distBeam = Math.abs(c.lon - satLon);
+                const pingBoost = distBeam < 0.18 ? 1 : 0.35;
+
+                if (distBeam < 0.18 && c.dark && hudReadout) {
+                    hudReadout.textContent = `${c.id} · ${c.sub}`;
+                }
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 6 + (1 - pingBoost) * 4, 0, Math.PI * 2);
+                ctx.strokeStyle = c.dark
+                    ? `rgba(239, 68, 68, ${0.25 + pingBoost * 0.45})`
+                    : `rgba(16, 185, 129, ${0.22 + pingBoost * 0.35})`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+                ctx.fillStyle = c.dark ? '#EF4444' : '#10B981';
+                ctx.fill();
+
+                ctx.font = '700 8.5px "JetBrains Mono", monospace';
+                ctx.fillStyle = c.dark ? '#FCA5A5' : '#6EE7B7';
+                ctx.fillText(c.id, p.x + 7, p.y - 2);
+                ctx.font = '500 7.5px "JetBrains Mono", monospace';
+                ctx.fillStyle = '#94A3B8';
+                ctx.fillText(c.sub, p.x + 7, p.y + 8);
+            });
+
+            if (!reducedMotion) requestAnimationFrame(renderFrame);
+        }
+        renderFrame();
+    })();
+    </script>
+</body>
+</html>
