@@ -1,0 +1,141 @@
+{
+  "type": "FeatureCollection",
+  "name": "Zona Economica Exclusiva Argentina (ZEE - Milla 200)",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "metadata": {
+    "authority": "Servicio de Hidrografia Naval (SHN) / Armada Argentina",
+    "legal_framework": "Ley de Espacios Maritimos N° 23.968 / CONVEMAR Art. 57",
+    "datum": "WGS84",
+    "description": "Limite exterior oficial de 200 millas nauticas de la Republica Argentina en el Atlantico Sudoccidental y Corredor Milla 201"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ARG-EEZ-POLY",
+        "name": "Zona Economica Exclusiva Argentina",
+        "zone_type": "Exclusive Economic Zone (EEZ)",
+        "sovereign_state": "Republica Argentina",
+        "jurisdiction": "Direccion Nacional de Coordinacion Pesquera / PNA / Armada Argentina",
+        "color": "#06b6d4"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-56.55, -35.03],
+            [-55.90, -35.40],
+            [-54.50, -36.20],
+            [-53.80, -37.10],
+            [-53.20, -38.00],
+            [-53.00, -39.00],
+            [-53.30, -40.00],
+            [-54.00, -41.00],
+            [-55.10, -42.00],
+            [-56.20, -43.00],
+            [-57.40, -44.00],
+            [-58.50, -44.80],
+            [-59.20, -45.20],
+            [-59.70, -45.60],
+            [-60.05, -46.00],
+            [-60.40, -46.50],
+            [-60.80, -47.00],
+            [-61.50, -47.80],
+            [-62.20, -48.60],
+            [-63.10, -49.50],
+            [-64.00, -50.40],
+            [-64.80, -51.20],
+            [-65.50, -52.00],
+            [-65.80, -52.80],
+            [-65.20, -53.50],
+            [-64.50, -54.20],
+            [-63.80, -54.80],
+            [-63.00, -55.20],
+            [-62.00, -55.60],
+            [-60.80, -55.80],
+            [-59.50, -55.50],
+            [-58.20, -55.00],
+            [-57.00, -54.20],
+            [-56.20, -53.00],
+            [-55.50, -51.80],
+            [-55.00, -50.50],
+            [-54.50, -49.00],
+            [-54.20, -47.50],
+            [-54.00, -46.00],
+            [-53.80, -44.50],
+            [-53.50, -43.00],
+            [-53.00, -41.50],
+            [-52.50, -40.00],
+            [-52.20, -38.50],
+            [-52.80, -37.00],
+            [-53.50, -36.00],
+            [-54.80, -35.20],
+            [-56.55, -35.03]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ARG-EEZ-BOUNDARY-LINE",
+        "name": "Limite Exterior Oficial 200 Millas Nauticas (Milla 200)",
+        "feature_type": "Maritime Boundary Line",
+        "color": "#ef4444",
+        "stroke_width": 2.5
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [-53.50, -36.00],
+          [-52.80, -37.00],
+          [-52.20, -38.50],
+          [-52.50, -40.00],
+          [-53.00, -41.50],
+          [-53.50, -43.00],
+          [-53.80, -44.50],
+          [-54.00, -46.00],
+          [-54.20, -47.50],
+          [-54.50, -49.00],
+          [-55.00, -50.50],
+          [-55.50, -51.80],
+          [-56.20, -53.00],
+          [-57.00, -54.20],
+          [-58.20, -55.00],
+          [-59.50, -55.50],
+          [-60.80, -55.80],
+          [-62.00, -55.60],
+          [-63.00, -55.20],
+          [-63.80, -54.80]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": "ARG-BLUE-HOLE-AOI",
+        "name": "Corredor Milla 201 / Agujero Azul (Hotspot de Flota Extranjera)",
+        "feature_type": "Surveillance Area of Interest (AOI)",
+        "color": "#f59e0b",
+        "stroke_style": "dashed"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-61.50, -44.00],
+            [-58.00, -44.00],
+            [-58.00, -47.50],
+            [-61.50, -47.50],
+            [-61.50, -44.00]
+          ]
+        ]
+      }
+    }
+  ]
+}
