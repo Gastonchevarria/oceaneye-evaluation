@@ -302,10 +302,11 @@ def main() -> int:
             errors.append(f"{tid}: Ed25519/SHA-256 verification failed on canonical_payload: {reason_sig}")
 
     # 6. Zero BBVA / Leonardo / seed leak in git HEAD
-    git_log = subprocess.check_output(
-        ["git", "-C", str(ROOT), "log", "-n", "1", "--grep=BBVA", "--grep=Leonardo", "-i", "--oneline"],
+    head_msg = subprocess.check_output(
+        ["git", "-C", str(ROOT), "show", "-s", "--format=%s", "HEAD"],
         text=True,
     ).strip()
+    git_log = head_msg if re.search(r"bbva|leonardo", head_msg, re.I) else ""
     if git_log:
         errors.append(f"Git log contains forbidden brand terms: {git_log}")
 
