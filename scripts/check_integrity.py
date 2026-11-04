@@ -20,9 +20,73 @@ sys.path.insert(0, str(ROOT / "backend"))
 sys.path.append(site.getusersitepackages())
 
 import base64  # noqa: E402
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey  # noqa: E402
+try:
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey  # noqa: E402
+except ImportError:
+    Ed25519PublicKey = None
 import build_stats  # noqa: E402
 import decode_mask  # noqa: E402
+
+
+def _ed25519_verify_pure_python(pub: bytes, sig: bytes, msg: bytes) -> bool:
+    if len(pub) != 32 or len(sig) != 64:
+        return False
+    q = 2**255 - 19
+    l = 2**252 + 27742317777372353535851937790883648493
+    d = -121665 * pow(121666, q - 2, q) % q
+    I = pow(2, (q - 1) // 4, q)
+
+    def xrecover(y: int) -> int:
+        xx = (y * y - 1) * pow(d * y * y + 1, q - 2, q) % q
+        x = pow(xx, (q + 3) // 8, q)
+        if (x * x - xx) % q != 0:
+            x = (x * I) % q
+        if x % 2 != 0:
+            x = q - x
+        return x
+
+    def edwards_add(P, Q):
+        (x1, y1), (x2, y2) = P, Q
+        x3 = (x1 * y2 + x2 * y1) * pow(1 + d * x1 * x2 * y1 * y2, q - 2, q) % q
+        y3 = (y1 * y2 + x1 * x2) * pow(1 - d * x1 * x2 * y1 * y2, q - 2, q) % q
+        return (x3, y3)
+
+    def scalarmult(P, e: int):
+        R = (0, 1)
+        Q = P
+        while e > 0:
+            if e & 1:
+                R = edwards_add(R, Q)
+            Q = edwards_add(Q, Q)
+            e >>= 1
+        return R
+
+    def encodepoint(P) -> bytes:
+        x, y = P
+        bits = [(y >> i) & 1 for i in range(255)] + [x & 1]
+        return bytes(sum(bits[i * 8 + j] << j for j in range(8)) for i in range(32))
+
+    def decodepoint(s: bytes):
+        y = sum(((s[i // 8] >> (i % 8)) & 1) << i for i in range(255))
+        sign = (s[31] >> 7) & 1
+        x = xrecover(y)
+        if (x & 1) != sign:
+            x = q - x
+        P = (x, y)
+        if (-x * x + y * y - 1 - d * x * x * y * y) % q != 0:
+            raise ValueError("Point not on curve")
+        return P
+
+    By = 4 * pow(5, q - 2, q) % q
+    B = (xrecover(By) % q, By % q)
+    R_bytes, S_bytes = sig[:32], sig[32:]
+    S = int.from_bytes(S_bytes, "little")
+    if S >= l:
+        return False
+    A = decodepoint(pub)
+    R = decodepoint(R_bytes)
+    k = int.from_bytes(hashlib.sha512(R_bytes + pub + msg).digest(), "little") % l
+    return encodepoint(scalarmult(B, S)) == encodepoint(edwards_add(R, scalarmult(A, k)))
 
 
 def verify_ed25519_canonical_cert(cert: dict) -> tuple[bool, str]:
@@ -35,8 +99,12 @@ def verify_ed25519_canonical_cert(cert: dict) -> tuple[bool, str]:
         return False, f"sha256 mismatch ({expected_sha256} != {cert.get('sha256_evidence_hash')})"
     pub_bytes = bytes.fromhex(cert.get("laya_public_key_hex", ""))
     sig_bytes = base64.b64decode(cert.get("ed25519_signature_base64", ""))
-    pub_key = Ed25519PublicKey.from_public_bytes(pub_bytes)
-    pub_key.verify(sig_bytes, payload_bytes)
+    if Ed25519PublicKey is not None:
+        pub_key = Ed25519PublicKey.from_public_bytes(pub_bytes)
+        pub_key.verify(sig_bytes, payload_bytes)
+    else:
+        if not _ed25519_verify_pure_python(pub_bytes, sig_bytes, payload_bytes):
+            return False, "Ed25519 pure-Python RFC 8032 signature verification failed"
     return True, "ok"
 
 

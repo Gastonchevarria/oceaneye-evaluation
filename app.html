@@ -227,40 +227,40 @@
         }
 
         /* Responsive Breakpoints for Command Header & Map HUD */
-        @media (max-width: 1400px) {
+        @media (max-width: 1750px) {
+            .header-telemetry-status { display: none !important; }
+            .badge-sovereignty { display: none !important; }
+        }
+        @media (max-width: 1560px) {
             .btn-text-full { display: none !important; }
             .btn-text-short { display: inline !important; }
             .layer-text-full { display: none !important; }
             .layer-text-short { display: inline !important; }
-            .header-btn.modal-trigger-btn { display: none !important; }
-        }
-        @media (min-width: 1401px) {
-            .btn-text-short { display: none !important; }
-            .layer-text-short { display: none !important; }
-        }
-        @media (max-width: 1250px) {
-            .badge-sovereignty { display: none !important; }
-            .header-telemetry-status { display: none !important; }
             .tab-full-label { display: none !important; }
             .tab-short-label { display: inline !important; }
+            .audio-text-full { display: none !important; }
+            .audio-text-short { display: inline !important; }
+        }
+        @media (min-width: 1561px) {
+            .btn-text-short { display: none !important; }
+            .layer-text-short { display: none !important; }
+            .tab-short-label { display: none !important; }
+            .audio-text-short { display: none !important; }
+        }
+        @media (max-width: 1250px) {
             .tour-text-full { display: none !important; }
             .tour-text-short { display: inline !important; }
+            .header-btn.modal-trigger-btn { display: none !important; }
         }
         @media (min-width: 1251px) {
-            .tab-short-label { display: none !important; }
             .tour-text-short { display: none !important; }
         }
         @media (max-width: 1050px) {
             .header-clock { display: none !important; }
-            .audio-text-full { display: none !important; }
-            .audio-text-short { display: inline !important; }
             #sidebar { width: 280px; min-width: 280px; }
             #sidebar.collapsed { margin-left: -280px; }
             #rightForensicPanel { width: 330px; min-width: 330px; }
             #rightForensicPanel.collapsed { margin-right: -330px; }
-        }
-        @media (min-width: 1051px) {
-            .audio-text-short { display: none !important; }
         }
 
         /* VIEW CONTAINER */
@@ -950,6 +950,9 @@
             align-items: center;
             gap: 6px;
         }
+        @media (max-width: 1780px) {
+            #syntheticSceneBadge, .header-telemetry-status, .badge-sovereignty { display: none !important; }
+        }
         .telemetry-chip {
             display: inline-flex;
             align-items: center;
@@ -1190,6 +1193,9 @@
             box-shadow: 0 0 0 3px #00d2fe, 0 0 35px rgba(0, 210, 254, 0.65) !important;
             border-radius: 8px !important;
         }
+        .tour-parent-lifted {
+            z-index: 99995 !important;
+        }
     </style>
 </head>
 <body>
@@ -1236,7 +1242,7 @@
             </div>
 
             <!-- 90s Meta Jury Pitch Button -->
-            <button class="header-btn" id="headerPitch90Btn" data-onclick="startPitch90s()" style="background:linear-gradient(135deg,#10b981,#059669);border-color:#34d399;color:#04130d;font-weight:900;flex-shrink:0;" title="Automated 90-second Guided Pitch for Meta AI Judges">
+            <button class="header-btn" id="headerPitch90Btn" data-onclick="startPitch90s()" style="display:none;background:linear-gradient(135deg,#10b981,#059669);border-color:#34d399;color:#04130d;font-weight:900;flex-shrink:0;" title="Automated 90-second Guided Pitch for Meta AI Judges">
                 ▶ <span class="tour-text-full">90s Judge Pitch</span><span class="tour-text-short">90s Pitch</span>
             </button>
 
@@ -4709,11 +4715,17 @@ if (typeof module !== 'undefined' && module.exports) {
 
         // 1. Remove previous highlights
         document.querySelectorAll('.tour-highlighted').forEach(el => el.classList.remove('tour-highlighted'));
+        document.querySelectorAll('.tour-parent-lifted').forEach(el => el.classList.remove('tour-parent-lifted'));
 
         // 2. Keep modal card position smoothly centered across all steps
         const modal = document.getElementById('oceaneyeTourModal');
+        const card = modal ? modal.querySelector('.tour-card') : null;
         if (modal) {
             modal.classList.remove('tour-modal-bottom');
+        }
+        if (card) {
+            card.style.marginRight = step.highlightSelector === '.panel-sar-chip-box' ? '380px' : '0px';
+            card.style.marginLeft = step.highlightSelector === '#sidebar' ? '320px' : '0px';
         }
 
         // 3. Switch to step view
@@ -4739,7 +4751,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
         if (prevBtn) prevBtn.style.visibility = stepIdx === 0 ? 'hidden' : 'visible';
         if (nextBtn) {
-            nextBtn.textContent = stepIdx === tourSteps.length - 1 ? 'Finalizar Recorrido ✓' : 'Next ▶';
+            nextBtn.textContent = stepIdx === tourSteps.length - 1 ? 'Complete Tour ✓' : 'Next ▶';
         }
 
         // Update dots
@@ -4748,12 +4760,16 @@ if (typeof module !== 'undefined' && module.exports) {
             dot.classList.toggle('active', idx === stepIdx);
         });
 
-        // 6. Highlight target DOM element with glowing border
+        // 6. Highlight target DOM element with glowing border & lift parent stacking context above blur backdrop
         if (step.highlightSelector) {
             setTimeout(() => {
                 const target = document.querySelector(step.highlightSelector);
                 if (target) {
                     target.classList.add('tour-highlighted');
+                    const rightPanel = target.closest('#rightForensicPanel');
+                    if (rightPanel) rightPanel.classList.add('tour-parent-lifted');
+                    const dossierView = target.closest('#forensicDossierView');
+                    if (dossierView) dossierView.classList.add('tour-parent-lifted');
                 }
             }, 120);
         }
@@ -4778,6 +4794,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
     function closeTour() {
         document.querySelectorAll('.tour-highlighted').forEach(el => el.classList.remove('tour-highlighted'));
+        document.querySelectorAll('.tour-parent-lifted').forEach(el => el.classList.remove('tour-parent-lifted'));
         const modal = document.getElementById('oceaneyeTourModal');
         if (modal) {
             modal.style.display = 'none';
