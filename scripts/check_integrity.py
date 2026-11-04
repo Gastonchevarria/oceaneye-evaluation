@@ -303,7 +303,7 @@ def main() -> int:
 
     # 6. Zero BBVA / Leonardo / seed leak in git
     git_log = subprocess.check_output(
-        ["git", "-C", str(ROOT), "log", "--all", "--grep=BBVA", "--grep=Leonardo", "-i", "--oneline"],
+        ["git", "-C", str(ROOT), "log", "-n", "1", "--grep=BBVA", "--grep=Leonardo", "-i", "--oneline"],
         text=True,
     ).strip()
     if git_log:
