@@ -301,7 +301,7 @@ def main() -> int:
         if not ok_sig:
             errors.append(f"{tid}: Ed25519/SHA-256 verification failed on canonical_payload: {reason_sig}")
 
-    # 6. Zero BBVA / Leonardo / seed leak in git
+    # 6. Zero BBVA / Leonardo / seed leak in git HEAD
     git_log = subprocess.check_output(
         ["git", "-C", str(ROOT), "log", "-n", "1", "--grep=BBVA", "--grep=Leonardo", "-i", "--oneline"],
         text=True,
