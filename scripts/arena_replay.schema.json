@@ -1,0 +1,430 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "arena_replay.schema.json",
+  "title": "OceanEye Sentinel 2.0 - Arena Replay (Wonder vs Spark)",
+  "description": "Datos grabados de una corrida de muse-wonder-1.0 y muse-spark-1.3 sobre los mismos casos. El front-end estatico los reproduce (REPLAY); nunca implica inferencia en vivo. Los offsets char_start/char_end y los checkpoints de stream_timeline son indices en unidades UTF-16 sobre narrative_full normalizado NFC (equivalentes a String.prototype.slice en JS).",
+  "type": "object",
+  "required": ["schema_version", "provenance", "replay", "data_quality", "cases"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "arena_replay/1.0" },
+    "provenance": { "$ref": "#/$defs/provenance" },
+    "replay": { "$ref": "#/$defs/replay" },
+    "data_quality": { "$ref": "#/$defs/data_quality" },
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/case" }
+    }
+  },
+  "if": {
+    "properties": { "provenance": { "properties": { "dataset_version": { "const": "v1-streamed-capture" } }, "required": ["dataset_version"] } },
+    "required": ["provenance"]
+  },
+  "then": {
+    "properties": {
+      "cases": {
+        "items": {
+          "properties": {
+            "runs": {
+              "properties": {
+                "muse-wonder-1.0": { "$ref": "#/$defs/run_v1_extra" },
+                "muse-spark-1.3": { "$ref": "#/$defs/run_v1_extra" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "iso_utc": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|\\+00:00)$"
+    },
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "model_id": { "enum": ["muse-wonder-1.0", "muse-spark-1.3"] },
+
+    "price_usd_per_1m": {
+      "type": "object",
+      "required": ["input", "output", "cached_input"],
+      "additionalProperties": false,
+      "properties": {
+        "input": { "type": "number", "minimum": 0 },
+        "output": { "type": "number", "minimum": 0 },
+        "cached_input": { "type": "number", "minimum": 0 }
+      }
+    },
+
+    "provenance": {
+      "type": "object",
+      "required": [
+        "run_id", "dataset_version", "generated_at", "source_run_at", "temperature", "max_tokens",
+        "n_per_case", "concurrency", "streaming", "reasoning_effort", "fallback_disabled",
+        "prompt_template_sha256", "price_source", "validator", "source", "sample_note"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "run_id": { "type": "string", "minLength": 3 },
+        "dataset_version": {
+          "enum": ["v0-artifact-derived", "v1-streamed-capture"],
+          "description": "v0 se arma solo con el artefacto actual (narrativa truncada, sin timeline). v1 es la recaptura con streaming."
+        },
+        "generated_at": { "$ref": "#/$defs/iso_utc", "description": "Cuando se armo este archivo." },
+        "source_run_at": {
+          "$ref": "#/$defs/iso_utc",
+          "description": "Cuando se hicieron las llamadas a la API (v0: artifact.updated_at_utc; v1: inicio de la captura)."
+        },
+        "temperature": { "type": "number", "minimum": 0, "maximum": 2 },
+        "max_tokens": {
+          "type": "integer", "minimum": 1,
+          "description": "Tope de tokens generados (el suite envia el parametro max_tokens, alias obsoleto de max_completion_tokens segun https://dev.meta.ai/docs/protocols/chat-completions; VERIFY igual semantica si se renombra). En la API de Meta cuenta razonamiento + salida visible (https://dev.meta.ai/docs/reasoning)."
+        },
+        "n_per_case": { "type": "integer", "const": 1, "description": "La API solo soporta n=1; una corrida por caso y modelo. Resultados indicativos." },
+        "concurrency": { "type": "integer", "minimum": 1, "description": "Solicitudes simultaneas durante la captura. Afecta la latencia medida." },
+        "streaming": { "type": "boolean" },
+        "reasoning_effort": { "type": ["string", "null"], "description": "null = no se envio el parametro (el nivel por defecto del modelo no esta documentado: VERIFY). Valores documentados: minimal, low, medium, high, xhigh, max; 'none' devuelve HTTP 400 en Wonder y Spark; 'max' no sirve en el modelo contributor (https://dev.meta.ai/docs/reasoning)." },
+        "fallback_disabled": {
+          "type": ["boolean", "null"],
+          "description": "true si el cliente no reintenta con otro modelo. null = desconocido (v0: el cliente tenia fallback silencioso)."
+        },
+        "prompt_template_sha256": {
+          "$ref": "#/$defs/sha256",
+          "description": "sha256 UTF-8 de system + '\\n---\\n' + plantilla de usuario con marcadores literales {case_id},{description},{lat},{lon},{distance_to_eez_nm},{length_m},{peak_rcs_db}."
+        },
+        "price_source": {
+          "type": "object",
+          "required": ["url", "retrieved_on", "usd_per_1m_tokens", "reasoning_billed_as_output", "cost_formula"],
+          "additionalProperties": false,
+          "properties": {
+            "url": { "type": "string" },
+            "retrieved_on": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+            "usd_per_1m_tokens": {
+              "type": "object",
+              "required": ["muse-wonder-1.0", "muse-spark-1.3"],
+              "additionalProperties": false,
+              "properties": {
+                "muse-wonder-1.0": { "$ref": "#/$defs/price_usd_per_1m" },
+                "muse-spark-1.3": { "$ref": "#/$defs/price_usd_per_1m" }
+              }
+            },
+            "reasoning_billed_as_output": { "type": "boolean" },
+            "reasoning_billing_source": { "type": "string" },
+            "cost_formula": { "type": "string" }
+          }
+        },
+        "validator": {
+          "type": "object",
+          "required": ["version", "sha256", "source_path"],
+          "additionalProperties": false,
+          "properties": {
+            "version": { "type": "string" },
+            "sha256": { "$ref": "#/$defs/sha256" },
+            "source_path": { "type": "string" },
+            "git_commit": { "type": ["string", "null"] }
+          }
+        },
+        "source": {
+          "type": "object",
+          "required": ["artifact_path", "artifact_sha256", "artifact_benchmark_id", "suite_path", "suite_sha256", "git_commit"],
+          "additionalProperties": false,
+          "properties": {
+            "artifact_path": { "type": "string" },
+            "artifact_sha256": { "$ref": "#/$defs/sha256" },
+            "artifact_benchmark_id": { "type": "string" },
+            "suite_path": { "type": "string" },
+            "suite_sha256": { "$ref": "#/$defs/sha256" },
+            "git_commit": { "type": ["string", "null"] },
+            "harness_path": { "type": "string" },
+            "harness_sha256": { "$ref": "#/$defs/sha256" },
+            "rules_engine_sha256": { "$ref": "#/$defs/sha256" }
+          }
+        },
+        "sample_note": { "type": "string", "minLength": 10 }
+      }
+    },
+
+    "replay": {
+      "type": "object",
+      "required": ["default_speed", "speed_options", "label", "disclaimer", "sides", "featured_case_id"],
+      "additionalProperties": false,
+      "properties": {
+        "default_speed": { "enum": [1, 2, 4, 8, 16], "default": 8 },
+        "speed_options": { "type": "array", "items": { "enum": [1, 2, 4, 8, 16] }, "minItems": 1, "uniqueItems": true },
+        "label": { "const": "REPLAY" },
+        "disclaimer": { "type": "string", "minLength": 20 },
+        "sides": {
+          "type": "object",
+          "required": ["left", "right"],
+          "additionalProperties": false,
+          "properties": {
+            "left": { "$ref": "#/$defs/model_id" },
+            "right": { "$ref": "#/$defs/model_id" }
+          }
+        },
+        "featured_case_id": { "type": ["string", "null"] }
+      }
+    },
+
+    "data_quality": {
+      "type": "object",
+      "required": ["missing_fields", "known_issues", "ui_policy"],
+      "additionalProperties": false,
+      "properties": {
+        "missing_fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "reason", "remedy"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string" },
+              "reason": { "type": "string" },
+              "remedy": { "type": "string" }
+            }
+          }
+        },
+        "known_issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "severity", "summary", "evidence"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^DQ-[0-9]{2}$" },
+              "severity": { "enum": ["info", "warning", "blocker"] },
+              "summary": { "type": "string" },
+              "evidence": { "type": "string" }
+            }
+          }
+        },
+        "ui_policy": {
+          "type": "object",
+          "required": ["replay_banner_required", "red_pen_enabled", "narrative_is_truncated", "timing_is_interpolated", "validator_verified"],
+          "additionalProperties": false,
+          "properties": {
+            "replay_banner_required": { "const": true },
+            "red_pen_enabled": { "type": "boolean", "description": "false = no dibujar subrayados rojos sobre salidas de modelos." },
+            "narrative_is_truncated": { "type": "boolean" },
+            "timing_is_interpolated": { "type": "boolean" },
+            "validator_verified": { "type": "boolean", "description": "false = los hallazgos/adherencia provienen del validador heredado sin auditar; no llamarlos 'alucinaciones'." }
+          }
+        }
+      }
+    },
+
+    "ground_truth": {
+      "type": "object",
+      "required": ["lat", "lon", "distance_to_eez_nm", "length_m", "peak_rcs_db", "classification", "jurisdiction_zone", "economic_penalty_max_usd"],
+      "additionalProperties": false,
+      "properties": {
+        "lat": { "type": "number", "minimum": -90, "maximum": 90 },
+        "lon": { "type": "number", "minimum": -180, "maximum": 180 },
+        "distance_to_eez_nm": { "type": "number", "description": "Con signo: negativo = dentro de la ZEE. Es un hecho del escenario de prueba, no se recalcula con la geometria ZEE." },
+        "length_m": { "type": "number", "minimum": 0 },
+        "beam_m": { "type": "number", "minimum": 0 },
+        "peak_rcs_db": { "type": "number" },
+        "snr_db": { "type": "number" },
+        "classification": { "enum": ["DARK_VESSEL", "GHOST_AIS", "COOPERATIVE_VESSEL"] },
+        "jurisdiction_zone": { "type": "string" },
+        "economic_penalty_max_usd": { "type": ["number", "null"] },
+        "infraction_code": { "type": "string", "description": "Codigo de infraccion del motor de reglas (rules_engine.py) con los flags del escenario. Es el 'expected' de SEM-EXON-001; no mostrarlo crudo (ver README, tabla de rotulos)." }
+      }
+    },
+
+    "usage": {
+      "type": "object",
+      "required": ["prompt", "completion", "reasoning", "total"],
+      "additionalProperties": false,
+      "properties": {
+        "prompt": { "type": "integer", "minimum": 0 },
+        "completion": { "type": "integer", "minimum": 0, "description": "Incluye los tokens de razonamiento." },
+        "reasoning": { "type": "integer", "minimum": 0, "description": "Subconjunto de completion." },
+        "total": { "type": "integer", "minimum": 0, "description": "prompt + completion." },
+        "cached_prompt": { "type": ["integer", "null"], "minimum": 0, "description": "Tokens de entrada servidos desde cache, de usage.prompt_tokens_details.cached_tokens (https://dev.meta.ai/docs/prompt-caching; el cache es automatico). VERIFY que aparezca tambien en el ultimo chunk SSE; null = no informado." }
+      }
+    },
+
+    "finding": {
+      "type": "object",
+      "required": ["rule_id", "field", "expected", "observed", "matched_text", "char_start", "char_end", "severity"],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "enum": [
+            "NUM-LAT-001", "NUM-LON-001", "NUM-DIST-001", "NUM-LEN-001", "NUM-RCS-001",
+            "SEM-EXON-001", "SEM-ZONE-001", "SEM-PEN-001", "SEM-VESSEL-001", "SEM-DEFAM-001"
+          ]
+        },
+        "field": {
+          "enum": ["latitude", "longitude", "distance_to_eez_nm", "length_m", "peak_rcs_db", "legal_characterization", "jurisdiction_zone", "economic_penalty_usd", "vessel_type", "infraction"]
+        },
+        "expected": { "type": ["number", "string"], "description": "Valor de verdad del escenario ('esperado')." },
+        "observed": { "type": ["number", "string"], "description": "Valor que dijo el modelo ('dijo')." },
+        "matched_text": { "type": "string", "minLength": 1, "description": "Debe ser igual a narrative_full[char_start:char_end] (UTF-16)." },
+        "char_start": { "type": "integer", "minimum": 0 },
+        "char_end": { "type": "integer", "minimum": 1, "description": "Exclusivo. char_end > char_start." },
+        "severity": { "enum": ["critical", "high", "medium", "low"] },
+        "legacy_severity": { "type": "string" }
+      }
+    },
+
+    "validator_result": {
+      "type": "object",
+      "required": ["version", "status", "is_valid", "adherence_percent", "findings"],
+      "additionalProperties": false,
+      "properties": {
+        "version": { "type": "string" },
+        "status": {
+          "enum": ["legacy_unverified", "reference_provisional", "verified"],
+          "description": "legacy_unverified: salida del validador v2.0 del repo sin auditar falsos positivos. verified: validador corregido con spans y tests."
+        },
+        "is_valid": { "type": "boolean" },
+        "adherence_percent": { "type": "number", "minimum": 0, "maximum": 100, "description": "max(0, 100 - 15*len(findings)). Es una penalizacion por hallazgo, no una exactitud medida." },
+        "findings": { "type": "array", "items": { "$ref": "#/$defs/finding" } },
+        "findings_available": { "type": "boolean", "description": "false = el detalle de hallazgos no se puede reconstruir con los datos actuales (findings vacio no significa 'sin hallazgos')." },
+        "notes": { "type": "array", "items": { "type": "string" } }
+      },
+      "if": {
+        "properties": { "findings_available": { "const": false } },
+        "required": ["findings_available"]
+      },
+      "then": {
+        "properties": { "findings": { "maxItems": 0 } }
+      }
+    },
+
+    "stream_checkpoint": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "minimum": 0, "description": "t_ms desde el inicio de la solicitud." },
+        { "type": "integer", "minimum": 0, "description": "Caracteres (UTF-16) de narrative_full visibles en t_ms." }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+
+    "run": {
+      "type": "object",
+      "required": [
+        "model_requested", "model_served", "request_id", "latency_ms", "time_to_first_token_ms",
+        "timing_basis", "interpolation", "stream_timeline", "usage", "cost_usd_estimate",
+        "narrative_full", "narrative_truncated", "validator"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "model_requested": { "$ref": "#/$defs/model_id" },
+        "model_served": { "type": ["string", "null"], "description": "Campo 'model' del cuerpo de la respuesta (o del primer chunk SSE: VERIFY que los chunks lo incluyan). null = no registrado." },
+        "request_id": { "type": "string", "minLength": 1 },
+        "finish_reason": { "type": ["string", "null"] },
+        "latency_ms": { "type": "number", "exclusiveMinimum": 0 },
+        "time_to_first_token_ms": { "type": ["number", "null"], "minimum": 0, "description": "Primer delta de content no vacio. Los modelos razonan en silencio: el razonamiento no se transmite (https://dev.meta.ai/docs/reasoning)." },
+        "timing_basis": { "enum": ["measured_sse", "interpolated"] },
+        "interpolation": {
+          "type": ["object", "null"],
+          "required": ["method", "estimated_ttft_ms", "formula"],
+          "additionalProperties": false,
+          "properties": {
+            "method": { "const": "reasoning_share_linear" },
+            "estimated_ttft_ms": { "type": "number", "minimum": 0 },
+            "formula": { "type": "string" }
+          }
+        },
+        "stream_timeline": {
+          "type": ["array", "null"],
+          "items": { "$ref": "#/$defs/stream_checkpoint" },
+          "minItems": 2
+        },
+        "usage": { "$ref": "#/$defs/usage" },
+        "cost_usd_estimate": { "type": "number", "minimum": 0 },
+        "narrative_full": { "type": "string", "minLength": 1 },
+        "narrative_truncated": { "type": "boolean", "description": "true = narrative_full es un prefijo (v0: 240 caracteres). Nunca aplicar subrayado rojo ni escribir como si fuera el texto completo." },
+        "narrative_source": { "enum": ["stream", "response_body", "artifact.narrative_preview"] },
+        "validator": { "$ref": "#/$defs/validator_result" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "timing_basis": { "const": "measured_sse" } }, "required": ["timing_basis"] },
+          "then": {
+            "properties": {
+              "stream_timeline": { "type": "array" },
+              "time_to_first_token_ms": { "type": "number" },
+              "interpolation": { "type": "null" }
+            }
+          },
+          "else": {
+            "properties": {
+              "stream_timeline": { "type": "null" },
+              "interpolation": { "type": "object" }
+            }
+          }
+        }
+      ]
+    },
+
+    "run_v1_extra": {
+      "properties": {
+        "model_served": { "type": "string" },
+        "narrative_truncated": { "const": false },
+        "validator": { "properties": { "status": { "const": "verified" }, "findings_available": { "const": true } } }
+      }
+    },
+
+    "synthetic_probe": {
+      "type": ["object", "null"],
+      "required": ["is_model_output", "label_es", "source", "text", "validator"],
+      "additionalProperties": false,
+      "properties": {
+        "is_model_output": { "const": false },
+        "label_es": { "type": "string", "minLength": 10 },
+        "source": { "type": "string" },
+        "text": { "type": "string", "minLength": 1 },
+        "validator": { "$ref": "#/$defs/validator_result" }
+      }
+    },
+
+    "case": {
+      "type": "object",
+      "required": ["case_id", "prompt_variant", "scenario", "prompt", "runs", "synthetic_probe"],
+      "additionalProperties": false,
+      "properties": {
+        "case_id": { "type": "string", "pattern": "^TC-[A-Z]+-[0-9]{3}$" },
+        "prompt_variant": { "type": "string", "minLength": 1, "description": "'baseline' = el prompt de la corrida original. Otra variante (p. ej. con distractores) requiere aprobacion de gasto aparte." },
+        "scenario": {
+          "type": "object",
+          "required": ["title", "category", "adversarial", "ground_truth", "expected_rule_id", "expected_severity"],
+          "additionalProperties": false,
+          "properties": {
+            "title": { "type": "string" },
+            "category": { "enum": ["A", "B", "C", "D", "E", "F"] },
+            "adversarial": { "type": "boolean", "description": "true = el harness define un texto alucinado inyectado a mano para este caso (synthetic_probe). El modelo recibe el mismo prompt que en los demas casos." },
+            "ground_truth": { "$ref": "#/$defs/ground_truth" },
+            "expected_rule_id": { "type": "string" },
+            "expected_severity": { "type": "string" }
+          }
+        },
+        "prompt": {
+          "type": "object",
+          "required": ["system", "user", "sha256", "reconstructed"],
+          "additionalProperties": false,
+          "properties": {
+            "system": { "type": "string" },
+            "user": { "type": "string" },
+            "sha256": { "$ref": "#/$defs/sha256", "description": "sha256 UTF-8 de system + '\\n---\\n' + user." },
+            "reconstructed": { "type": "boolean", "description": "true = se reconstruyo desde el codigo del suite; no se guardo en el artefacto." }
+          }
+        },
+        "runs": {
+          "type": "object",
+          "required": ["muse-wonder-1.0", "muse-spark-1.3"],
+          "additionalProperties": false,
+          "properties": {
+            "muse-wonder-1.0": { "$ref": "#/$defs/run" },
+            "muse-spark-1.3": { "$ref": "#/$defs/run" }
+          }
+        },
+        "synthetic_probe": { "$ref": "#/$defs/synthetic_probe" }
+      }
+    }
+  }
+}

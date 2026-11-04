@@ -1,0 +1,870 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:oceaneye:schema:sam_masks:1.0.0",
+  "title": "OceanEye Sentinel 2.0 SAM 3.1 Mask Inspector data (docs/data/sam_masks.json)",
+  "description": "Chips cropped from SAR scenes, box-prompted from CFAR detections and segmented with sam-3.1, plus an isolated section for the legacy muse-image-1.0 illustrations. Pixel coordinates are chip pixels, origin top-left, x to the right, y down. Boxes are INCLUSIVE (x2/y2 are the last pixel). Polygon vertices are pixel CORNER coordinates: pixel (i,j) spans [i,i+1]x[j,j+1]. Cross-field consistency (mask size vs inclusive bbox, hashes, areas, IoU, cost) is checked by `python3 -I decode_mask.py --verify <file>`; JSON Schema cannot express it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run", "chips", "illustrative_images"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "schema_version": { "const": "sam_masks/1.0.0" },
+    "run": { "$ref": "#/$defs/run" },
+    "chips": { "type": "array", "items": { "$ref": "#/$defs/chip" } },
+    "illustrative_images": { "$ref": "#/$defs/illustrative_images" }
+  },
+
+  "$defs": {
+    "sha256": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+    "uint": { "type": "integer", "minimum": 0 },
+    "unit_interval": { "type": "number", "minimum": 0, "maximum": 1 },
+    "nullable_unit_interval": { "type": ["number", "null"], "minimum": 0, "maximum": 1 },
+    "point2": { "type": "array", "items": { "type": "number" }, "minItems": 2, "maxItems": 2 },
+    "ring": { "type": "array", "items": { "$ref": "#/$defs/point2" }, "minItems": 3 },
+    "bbox_inclusive": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x1", "y1", "x2", "y2"],
+      "description": "Inclusive pixel box: x1<=x2, y1<=y2 (checked by decode_mask.py), width = x2-x1+1.",
+      "properties": {
+        "x1": { "$ref": "#/$defs/uint" },
+        "y1": { "$ref": "#/$defs/uint" },
+        "x2": { "$ref": "#/$defs/uint" },
+        "y2": { "$ref": "#/$defs/uint" }
+      }
+    },
+    "mask_data_string": {
+      "type": "string",
+      "description": "The complete value of the data= field of a <|mask;...|> tag: 'H,W,<marker><payload>'. Marker '!' = one_bit, '~' = lossless. Payload alphabet = 85 printable ASCII characters (no quote, backslash, comma, semicolon, angle brackets or pipe). Must NEVER be truncated or ellipsised.",
+      "pattern": "^[0-9]+,[0-9]+,[!~][!#-+\\x2D-:=?-\\x5B\\x5D-{]+$"
+    },
+
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run_id", "mode", "generated_at", "generator", "model_requested", "model_served", "model_served_source", "endpoint", "request_options", "price_source", "cost", "parsing"],
+      "properties": {
+        "run_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{5,63}$" },
+        "mode": {
+          "enum": ["template", "dry_run", "live"],
+          "description": "template = example file, nothing executed. dry_run = prompts built, no api.meta.ai call. live = real calls (costs money, needs the owner's explicit yes)."
+        },
+        "generated_at": { "type": ["string", "null"], "format": "date-time", "description": "UTC time the file was written. null only when mode is template." },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["name", "version", "git_commit"],
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": ["string", "null"] },
+            "git_commit": { "type": ["string", "null"] }
+          }
+        },
+        "model_requested": { "const": "sam-3.1" },
+        "model_served": {
+          "type": ["string", "null"],
+          "description": "Model id echoed by the API. null until a live run. All sam_response.model_served values must equal it (checked by decode_mask.py)."
+        },
+        "model_served_source": {
+          "type": ["string", "null"],
+          "description": "Where model_served was read, e.g. 'SSE event response.completed -> response.model'. VERIFY: the docs read so far do not state where the served model id appears."
+        },
+        "endpoint": { "const": "https://api.meta.ai/v1/responses" },
+        "request_options": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["stream", "include_confidence", "mask_encoding_requested"],
+          "properties": {
+            "stream": { "const": true },
+            "include_confidence": { "const": "true", "description": "Must be the STRING \"true\" inside request metadata, not a JSON boolean." },
+            "mask_encoding_requested": {
+              "type": ["string", "null"],
+              "description": "Value sent in metadata.mask_encoding, or null if omitted. Box and point prompts always return one_bit regardless of this value; only text prompts honour it (default lossless)."
+            }
+          }
+        },
+        "price_source": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["url", "retrieved_on", "sam_usd_per_1000_images"],
+          "properties": {
+            "url": { "const": "https://dev.meta.ai/docs/pricing-rate-limits" },
+            "retrieved_on": { "type": "string", "format": "date" },
+            "sam_usd_per_1000_images": { "type": "number", "exclusiveMinimum": 0 },
+            "muse_image_usd_per_image": { "type": ["number", "null"] }
+          }
+        },
+        "cost": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["billed_images", "estimated_usd", "multi_object_billing"],
+          "properties": {
+            "billed_images": { "$ref": "#/$defs/uint", "description": "Number of sam-3.1 requests actually sent, retries included." },
+            "estimated_usd": { "type": ["number", "null"], "description": "billed_images * sam_usd_per_1000_images / 1000. null in a template." },
+            "multi_object_billing": {
+              "enum": ["per_image_assumed", "per_object", "unknown_VERIFY"],
+              "description": "Whether a request with several prompted objects is billed once. The pricing page says per image; not confirmed for multi-object requests."
+            }
+          }
+        },
+        "parsing": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reference_decoder", "cross_check_decoder", "rasters_decoded", "rasters_disagreeing"],
+          "properties": {
+            "reference_decoder": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "version"],
+              "properties": { "name": { "const": "meta-sam-parser" }, "version": { "type": ["string", "null"] } }
+            },
+            "cross_check_decoder": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["name", "sha256"],
+              "properties": { "name": { "const": "decode_mask.py" }, "sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] } }
+            },
+            "rasters_decoded": { "$ref": "#/$defs/uint" },
+            "rasters_disagreeing": { "$ref": "#/$defs/uint", "description": "Masks where meta-sam-parser and decode_mask.py differ. Must be 0 before publishing." }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mode": { "const": "live" } }, "required": ["mode"] },
+          "then": {
+            "properties": {
+              "generated_at": { "type": "string" },
+              "model_served": { "type": "string" },
+              "cost": { "properties": { "estimated_usd": { "type": "number" } } }
+            }
+          }
+        }
+      ]
+    },
+
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "synthetic", "scene_id", "product_id", "product_url", "acquisition_time_utc", "polarisation", "calibration", "fixture", "stac"],
+      "properties": {
+        "kind": { "enum": ["synthetic_fixture", "sentinel1_grd"] },
+        "synthetic": { "type": "boolean" },
+        "scene_id": { "type": "string", "minLength": 1 },
+        "product_id": { "type": ["string", "null"], "description": "Sentinel-1 product name for real scenes; null for fixtures." },
+        "product_url": { "type": ["string", "null"], "format": "uri" },
+        "acquisition_time_utc": { "type": ["string", "null"], "format": "date-time" },
+        "polarisation": { "enum": ["VV", "VH", "fused_vv_vh"] },
+        "calibration": { "type": "string", "description": "Radiometric path from the source array to the displayed channel, e.g. 'linear power -> dB'." },
+        "fixture": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["generator", "seed", "shape", "nominal_resolution_m"],
+          "properties": {
+            "generator": { "type": "string" },
+            "seed": { "type": "integer" },
+            "shape": { "type": "array", "items": { "type": "integer", "minimum": 1 }, "minItems": 2, "maxItems": 2 },
+            "nominal_resolution_m": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        },
+        "stac": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["collection", "item_id", "asset_key"],
+          "properties": {
+            "collection": { "const": "sentinel-1-grd" },
+            "item_id": { "type": "string" },
+            "asset_key": { "type": ["string", "null"] }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "kind": { "const": "synthetic_fixture" } }, "required": ["kind"] },
+          "then": {
+            "properties": {
+              "synthetic": { "const": true },
+              "fixture": { "type": "object" },
+              "stac": { "type": "null" },
+              "product_id": { "type": "null" },
+              "product_url": { "type": "null" }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "kind": { "const": "sentinel1_grd" } }, "required": ["kind"] },
+          "then": {
+            "properties": {
+              "synthetic": { "const": false },
+              "fixture": { "type": "null" },
+              "product_id": { "type": "string", "minLength": 1 },
+              "product_url": { "type": "string" },
+              "acquisition_time_utc": { "type": "string" }
+            }
+          }
+        }
+      ]
+    },
+
+    "geometry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height", "upsample_factor", "resample", "scene_window", "pixel_spacing_m", "pixel_spacing_basis", "chip_pixel_spacing_m", "corners_wgs84", "geotransform", "geotransform_implied_spacing_m", "spacing_consistent_with_geotransform"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "upsample_factor": { "type": "integer", "minimum": 1, "description": "Chip pixels per native scene pixel. Vessels are only a few native pixels long, so chips are upsampled crops." },
+        "resample": { "enum": ["nearest", "bilinear", "bicubic", "lanczos"] },
+        "scene_window": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x0", "y0", "width", "height"],
+          "description": "Crop in NATIVE scene pixels: x0 = first column, y0 = first row. width*upsample_factor must equal chip width.",
+          "properties": {
+            "x0": { "$ref": "#/$defs/uint" },
+            "y0": { "$ref": "#/$defs/uint" },
+            "width": { "type": "integer", "minimum": 1 },
+            "height": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "pixel_spacing_m": { "type": "number", "exclusiveMinimum": 0, "description": "Spacing of the NATIVE scene pixel used for every metric conversion (same value the CFAR estimator used, so lengths are comparable)." },
+        "pixel_spacing_basis": { "enum": ["fixture_nominal_resolution_m", "product_metadata", "assumed_VERIFY"] },
+        "chip_pixel_spacing_m": { "type": "number", "exclusiveMinimum": 0, "description": "pixel_spacing_m / upsample_factor. area_m2 = area_px * chip_pixel_spacing_m^2." },
+        "corners_wgs84": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["top_left", "top_right", "bottom_right", "bottom_left"],
+          "description": "[lon, lat] of the four chip corners (outer pixel edges).",
+          "properties": {
+            "top_left": { "$ref": "#/$defs/point2" },
+            "top_right": { "$ref": "#/$defs/point2" },
+            "bottom_right": { "$ref": "#/$defs/point2" },
+            "bottom_left": { "$ref": "#/$defs/point2" }
+          }
+        },
+        "geotransform": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["convention", "origin_lon", "origin_lat", "d_lon_per_chip_px", "d_lat_per_chip_px"],
+          "description": "Linear map from chip corner coordinates (x,y) to degrees: lon = origin_lon + x*d_lon_per_chip_px, lat = origin_lat + y*d_lat_per_chip_px. Not valid for real GRD scenes with non-linear geolocation; use the product's GCPs there and leave this null.",
+          "properties": {
+            "convention": { "const": "linear_degrees_from_chip_corner_xy" },
+            "origin_lon": { "type": "number" },
+            "origin_lat": { "type": "number" },
+            "d_lon_per_chip_px": { "type": "number" },
+            "d_lat_per_chip_px": { "type": "number" }
+          }
+        },
+        "geotransform_implied_spacing_m": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["x_m", "y_m", "method"],
+          "description": "Native pixel spacing implied by the geotransform, to expose inconsistencies with pixel_spacing_m.",
+          "properties": {
+            "x_m": { "type": "number" },
+            "y_m": { "type": "number" },
+            "method": { "type": "string" }
+          }
+        },
+        "spacing_consistent_with_geotransform": {
+          "type": ["boolean", "null"],
+          "description": "false for the Mile 201 fixture: bounds imply roughly 156-157 x 222.6 m per native pixel (1.2 deg over 599 intervals) while the generator and CFAR use 10 m. Show it, do not hide it."
+        }
+      }
+    },
+
+    "display_image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "media_type", "width", "height", "channels", "bit_depth", "sha256", "normalisation"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "pattern": "^sam_chips/[A-Za-z0-9][A-Za-z0-9_.-]*\\.png$",
+          "description": "PNG preview, relative to the directory that holds sam_masks.json (docs/data/), i.e. file docs/data/sam_chips/<name>.png."
+        },
+        "media_type": { "const": "image/png" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "channels": { "enum": [1, 3] },
+        "bit_depth": { "const": 8 },
+        "sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }], "description": "Hash of the PNG file. null while the chip is pending." },
+        "normalisation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["method", "input_domain", "low", "high", "low_percentile", "high_percentile", "gamma"],
+          "description": "Exactly how source values became 8-bit pixels. low/high are the values actually applied (in input_domain units), so the PNG is reproducible.",
+          "properties": {
+            "method": { "enum": ["percentile_clip_linear", "fixed_clip_linear"] },
+            "input_domain": { "enum": ["linear_power", "dB"] },
+            "low": { "type": ["number", "null"] },
+            "high": { "type": ["number", "null"] },
+            "low_percentile": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+            "high_percentile": { "type": ["number", "null"], "minimum": 0, "maximum": 100 },
+            "gamma": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
+      }
+    },
+
+    "transport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["media_type", "bytes", "sha256", "file_id", "same_pixels_as_display_image"],
+      "description": "What was actually uploaded to /v1/files (purpose user_data). JPEG with file_id is the only path proven in the legacy code. The docs (https://dev.meta.ai/docs/sam/segmenting.md) accept image_url as a public URL or a base64 data URL (PNG in their example); file_id is documented there only for video, so PNG via file_id is still unverified.",
+      "properties": {
+        "media_type": { "enum": ["image/jpeg", "image/png"] },
+        "bytes": { "type": ["integer", "null"], "minimum": 1 },
+        "sha256": { "oneOf": [{ "$ref": "#/$defs/sha256" }, { "type": "null" }] },
+        "file_id": { "type": ["string", "null"] },
+        "same_pixels_as_display_image": { "type": "boolean", "description": "Must be true: mask coordinates are only valid on the uploaded pixel grid; if the API rescales, record it in sam_response.api_rescaled_to." }
+      }
+    },
+
+    "cfar_estimate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detection_id", "pixel_r", "pixel_c", "length_m", "beam_m", "heading_deg", "area_pixels", "peak_rcs_db", "snr_db", "bbox_native_px", "provenance"],
+      "description": "What the CFAR pipeline (SarVesselDetection) says about the target. SarVesselDetection has NO bbox; bbox_native_px must be derived from its connected component.",
+      "properties": {
+        "detection_id": { "type": "string", "pattern": "^SAR-TGT-[0-9]{3}$" },
+        "pixel_r": { "type": ["number", "null"], "description": "Row of the centroid in NATIVE scene pixels." },
+        "pixel_c": { "type": ["number", "null"], "description": "Column of the centroid in NATIVE scene pixels." },
+        "length_m": { "type": ["number", "null"] },
+        "beam_m": { "type": ["number", "null"] },
+        "heading_deg": { "type": ["number", "null"] },
+        "area_pixels": { "type": ["integer", "null"] },
+        "peak_rcs_db": { "type": ["number", "null"] },
+        "snr_db": { "type": ["number", "null"] },
+        "bbox_native_px": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["c_min", "r_min", "c_max", "r_max"],
+          "properties": {
+            "c_min": { "$ref": "#/$defs/uint" },
+            "r_min": { "$ref": "#/$defs/uint" },
+            "c_max": { "$ref": "#/$defs/uint" },
+            "r_max": { "$ref": "#/$defs/uint" }
+          }
+        },
+        "provenance": { "type": "string" }
+      }
+    },
+
+    "prompt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "coordinate_space", "media_width", "media_height", "input_text", "text", "objects", "origin_cfar_detection_ids", "box_derivation"],
+      "properties": {
+        "type": { "enum": ["box", "point", "text"] },
+        "coordinate_space": { "const": "chip_pixels_top_left_origin_inclusive" },
+        "media_width": { "type": "integer", "minimum": 1, "description": "The w= value of every box/point token. Must equal geometry.width (checked by decode_mask.py)." },
+        "media_height": { "type": "integer", "minimum": 1, "description": "The h= value of every token. Must equal geometry.height." },
+        "input_text": { "type": ["string", "null"], "description": "Exact input_text sent, e.g. '<0f>1<|box;x1=..;y1=..;x2=..;y2=..;w=..;h=..|>'. null until built." },
+        "text": { "type": ["string", "null"], "description": "Text prompt (only for type=text). A text prompt cannot be mixed with box/point prompts." },
+        "objects": {
+          "type": "array",
+          "maxItems": 16,
+          "description": "At most 16 prompted objects per request.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["object_id", "box_px", "point_px", "origin_cfar_detection_id", "cfar"],
+            "properties": {
+              "object_id": { "type": "integer", "minimum": 0 },
+              "box_px": { "oneOf": [{ "$ref": "#/$defs/bbox_inclusive" }, { "type": "null" }] },
+              "point_px": {
+                "type": ["object", "null"],
+                "additionalProperties": false,
+                "required": ["x", "y", "label"],
+                "properties": {
+                  "x": { "$ref": "#/$defs/uint" },
+                  "y": { "$ref": "#/$defs/uint" },
+                  "label": { "type": ["integer", "null"], "description": "Positive/negative click label. VERIFY the token syntax for point labels in the docs before use." }
+                }
+              },
+              "origin_cfar_detection_id": { "type": "string", "pattern": "^SAR-TGT-[0-9]{3}$" },
+              "cfar": { "$ref": "#/$defs/cfar_estimate" }
+            }
+          }
+        },
+        "origin_cfar_detection_ids": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^SAR-TGT-[0-9]{3}$" },
+          "uniqueItems": true,
+          "description": "CFAR detections this prompt derives from. Empty only for a negative control."
+        },
+        "box_derivation": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["method", "margin_native_px"],
+          "properties": {
+            "method": { "type": "string", "description": "e.g. 'connected-component extent + margin, scaled by upsample_factor, clipped to chip, inclusive'." },
+            "margin_native_px": { "type": "number", "minimum": 0 }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "box" } }, "required": ["type"] },
+          "then": {
+            "properties": {
+              "text": { "type": "null" },
+              "objects": { "minItems": 1, "items": { "properties": { "point_px": { "type": "null" } } } },
+              "origin_cfar_detection_ids": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "point" } }, "required": ["type"] },
+          "then": {
+            "properties": {
+              "text": { "type": "null" },
+              "objects": { "minItems": 1, "items": { "properties": { "box_px": { "type": "null" } } } },
+              "origin_cfar_detection_ids": { "minItems": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "text" } }, "required": ["type"] },
+          "then": {
+            "properties": {
+              "text": { "type": "string", "minLength": 1 },
+              "objects": { "maxItems": 0 },
+              "box_derivation": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+
+    "ground_truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "derivation", "objects"],
+      "description": "Only for synthetic fixtures. Real scenes carry ground_truth = null.",
+      "properties": {
+        "kind": { "const": "synthetic_injected_ellipse_footprint" },
+        "derivation": { "type": "string", "description": "How polygons were built from the generator (pixels where ellipse_norm<=1, scaled by upsample_factor)." },
+        "objects": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["gt_id", "name", "has_active_ais", "center_native_px", "length_m", "beam_m", "heading_deg", "footprint_native_px_count", "polygons_chip_px", "area_chip_px", "bbox_chip_px", "matches_prompt_object_id"],
+            "properties": {
+              "gt_id": { "type": "string", "pattern": "^GT-TGT-[0-9]{2}$" },
+              "name": { "type": "string" },
+              "has_active_ais": { "type": "boolean" },
+              "center_native_px": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["r", "c"],
+                "properties": { "r": { "type": "number" }, "c": { "type": "number" } }
+              },
+              "length_m": { "type": "number" },
+              "beam_m": { "type": "number" },
+              "heading_deg": { "type": "number" },
+              "footprint_native_px_count": { "$ref": "#/$defs/uint" },
+              "polygons_chip_px": { "type": "array", "items": { "$ref": "#/$defs/ring" }, "minItems": 1, "description": "Rings in chip corner coordinates, filled with the even-odd rule." },
+              "area_chip_px": { "type": "number" },
+              "bbox_chip_px": { "$ref": "#/$defs/bbox_inclusive" },
+              "matches_prompt_object_id": { "type": ["integer", "null"] }
+            }
+          }
+        }
+      }
+    },
+
+    "detection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["detection_id", "object_id", "prompt_object_id", "frame", "confidence", "score", "bbox", "mask", "metrics"],
+      "properties": {
+        "detection_id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$" },
+        "object_id": { "type": "integer", "minimum": 0, "description": "Object id in the response tags." },
+        "prompt_object_id": { "type": ["integer", "null"], "description": "Prompt object that produced it; null for text prompts." },
+        "frame": { "const": 0 },
+        "confidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["box", "mask"],
+          "description": "c from the box and mask tags (metadata include_confidence=\"true\"). Independent values. null means the tag carried no c, which is NOT zero.",
+          "properties": {
+            "box": { "$ref": "#/$defs/nullable_unit_interval" },
+            "mask": { "$ref": "#/$defs/nullable_unit_interval" }
+          }
+        },
+        "score": { "$ref": "#/$defs/nullable_unit_interval", "description": "Value the slider filters on: confidence.mask, else confidence.box, else null (null = unknown, keep visible and flag it)." },
+        "bbox": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x1", "y1", "x2", "y2", "w", "h"],
+          "description": "Response box, inclusive, chip pixels. w/h echo the media size in the tag.",
+          "properties": {
+            "x1": { "$ref": "#/$defs/uint" },
+            "y1": { "$ref": "#/$defs/uint" },
+            "x2": { "$ref": "#/$defs/uint" },
+            "y2": { "$ref": "#/$defs/uint" },
+            "w": { "type": "integer", "minimum": 1 },
+            "h": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "mask": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["encoding", "marker", "x", "y", "height", "width", "covers", "raw", "raw_length_chars", "raw_sha256", "decoded"],
+          "properties": {
+            "encoding": { "enum": ["one_bit", "lossless"] },
+            "marker": { "enum": ["!", "~"] },
+            "x": { "const": 0 },
+            "y": { "const": 0 },
+            "height": { "type": "integer", "minimum": 1 },
+            "width": { "type": "integer", "minimum": 1 },
+            "covers": {
+              "enum": ["inclusive_response_bbox", "dimension_mismatch_VERIFY"],
+              "description": "How the raster relates to the response box. The docs say the mask shares the box bounds but never state that H,W equal the box size. inclusive_response_bbox: H x W equals the inclusive box size, so raster pixel (row r, col c) is chip pixel (bbox.x1+c, bbox.y1+r); true for 11 of the 12 legacy records. dimension_mismatch_VERIFY: H x W differs from the inclusive box size (legacy SAR-TGT-007: mask 188x1024 against an inclusive box of 189x1027); the placement is unknown, so decoded.polygons must be empty, decoded.centroid_px null and the geometry-derived metrics null, and the viewer draws the box only. x and y in the tag are always 0."
+            },
+            "raw": { "$ref": "#/$defs/mask_data_string" },
+            "raw_length_chars": { "type": "integer", "minimum": 12 },
+            "raw_sha256": { "$ref": "#/$defs/sha256" },
+            "decoded": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["polygons", "polygon_epsilon_px", "polygon_convention", "fill_rule", "raster_sha256", "area_px", "area_m2", "centroid_px"],
+              "properties": {
+                "polygons": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["role", "points"],
+                    "properties": {
+                      "role": { "enum": ["outer", "hole"] },
+                      "points": { "$ref": "#/$defs/ring" }
+                    }
+                  }
+                },
+                "polygon_epsilon_px": { "type": "number", "minimum": 0, "description": "Douglas-Peucker tolerance in chip pixels (0 = exact pixel boundary)." },
+                "polygon_convention": { "const": "pixel_corner_xy_in_chip_px" },
+                "fill_rule": { "const": "evenodd" },
+                "raster_sha256": { "$ref": "#/$defs/sha256", "description": "SHA-256 of the decoded H*W bytes (0/1, row-major)." },
+                "area_px": { "$ref": "#/$defs/uint", "description": "Foreground pixel count of the decoded raster (not of the simplified polygon)." },
+                "area_m2": { "type": "number", "minimum": 0 },
+                "centroid_px": {
+                  "oneOf": [{ "$ref": "#/$defs/point2" }, { "type": "null" }],
+                  "description": "[x, y] mean of the foreground pixel centres in chip corner coordinates, i.e. (bbox.x1 + c + 0.5, bbox.y1 + r + 0.5) averaged. null when area_px is 0."
+                }
+              }
+            }
+          }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["matched_ground_truth_id", "iou_vs_ground_truth", "length_vs_cfar"],
+          "properties": {
+            "matched_ground_truth_id": { "type": ["string", "null"], "pattern": "^GT-TGT-[0-9]{2}$" },
+            "iou_vs_ground_truth": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["value", "intersection_px", "union_px", "evaluated_on"],
+              "properties": {
+                "value": { "$ref": "#/$defs/unit_interval" },
+                "intersection_px": { "$ref": "#/$defs/uint" },
+                "union_px": { "$ref": "#/$defs/uint" },
+                "evaluated_on": { "const": "chip_pixels" }
+              }
+            },
+            "length_vs_cfar": {
+              "type": ["object", "null"],
+              "additionalProperties": false,
+              "required": ["from_mask_m", "beam_from_mask_m", "feret_length_m", "heading_from_mask_deg", "cfar_m", "delta_m", "delta_pct", "estimator"],
+              "properties": {
+                "from_mask_m": { "type": "number", "description": "4*sqrt(largest eigenvalue)*spacing, same estimator as morphology.estimate_inertial_dimensions, on the mask raster." },
+                "beam_from_mask_m": { "type": "number" },
+                "feret_length_m": { "type": "number" },
+                "heading_from_mask_deg": { "type": "number" },
+                "cfar_m": { "type": ["number", "null"] },
+                "delta_m": { "type": ["number", "null"], "description": "from_mask_m - cfar_m" },
+                "delta_pct": { "type": ["number", "null"] },
+                "estimator": { "const": "pca_4sqrt_lambda" }
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "mask": { "properties": { "covers": { "const": "dimension_mismatch_VERIFY" } }, "required": ["covers"] } }, "required": ["mask"] },
+          "then": {
+            "properties": {
+              "mask": { "properties": { "decoded": { "properties": { "polygons": { "maxItems": 0 }, "centroid_px": { "type": "null" } } } } },
+              "metrics": { "properties": { "iou_vs_ground_truth": { "type": "null" }, "length_vs_cfar": { "type": "null" } } }
+            }
+          }
+        }
+      ]
+    },
+
+    "sam_response": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["response_id", "model_served", "http_status", "latency_ms", "received_at", "usage", "output_text_length", "output_text_sha256", "api_rescaled_to", "detections"],
+      "properties": {
+        "response_id": { "type": "string", "pattern": "^resp_[A-Za-z0-9]+$" },
+        "model_served": { "type": ["string", "null"] },
+        "http_status": { "const": 200 },
+        "latency_ms": { "type": "number", "minimum": 0 },
+        "received_at": { "type": "string", "format": "date-time" },
+        "usage": { "type": ["object", "null"], "description": "Usage block exactly as returned, if any." },
+        "output_text_length": { "$ref": "#/$defs/uint" },
+        "output_text_sha256": { "$ref": "#/$defs/sha256", "description": "Hash of the concatenated response.output_text.delta text, so the raw stream can be audited without storing it twice." },
+        "api_rescaled_to": {
+          "oneOf": [
+            { "type": "null" },
+            { "type": "object", "additionalProperties": false, "required": ["width", "height"], "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } } }
+          ],
+          "description": "null if the response w/h equal the uploaded image size. VERIFY whether large images are downscaled."
+        },
+        "detections": { "type": "array", "items": { "$ref": "#/$defs/detection" } }
+      }
+    },
+
+    "control": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["is_negative_control", "kind", "expected", "confidence_threshold", "observed_detections", "passed"],
+      "properties": {
+        "is_negative_control": { "type": "boolean" },
+        "kind": { "enum": ["none", "empty_sea", "ais_only_ghost"] },
+        "expected": { "enum": ["no_detection", null] },
+        "confidence_threshold": { "$ref": "#/$defs/nullable_unit_interval", "description": "A detection counts as observed when score is null or >= this value (null threshold = 0)." },
+        "observed_detections": { "type": ["integer", "null"], "minimum": 0 },
+        "passed": { "type": ["boolean", "null"], "description": "observed_detections == 0. Report a failure as a failure." }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "is_negative_control": { "const": true } }, "required": ["is_negative_control"] },
+          "then": { "properties": { "expected": { "const": "no_detection" }, "kind": { "enum": ["empty_sea", "ais_only_ghost"] } } },
+          "else": { "properties": { "expected": { "type": "null" }, "kind": { "const": "none" } } }
+        }
+      ]
+    },
+
+    "chip": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chip_id", "title", "status", "placeholder_fields", "source", "geometry", "display_image", "transport", "prompt", "ground_truth", "sam_response", "control", "error"],
+      "properties": {
+        "chip_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9_.-]{2,63}$" },
+        "title": { "type": "string", "minLength": 1 },
+        "status": { "enum": ["pending", "measured", "api_error"] },
+        "placeholder_fields": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "JSON pointers (relative to this chip) of values that are placeholders (0/null) and must be filled by the pipeline. Must be empty when status is measured."
+        },
+        "source": { "$ref": "#/$defs/source" },
+        "geometry": { "$ref": "#/$defs/geometry" },
+        "display_image": { "$ref": "#/$defs/display_image" },
+        "transport": { "oneOf": [{ "$ref": "#/$defs/transport" }, { "type": "null" }], "description": "null until the image is uploaded." },
+        "prompt": { "$ref": "#/$defs/prompt" },
+        "ground_truth": { "oneOf": [{ "$ref": "#/$defs/ground_truth" }, { "type": "null" }] },
+        "sam_response": { "oneOf": [{ "$ref": "#/$defs/sam_response" }, { "type": "null" }] },
+        "control": { "$ref": "#/$defs/control" },
+        "error": {
+          "type": ["object", "null"],
+          "additionalProperties": false,
+          "required": ["http_status", "type", "message", "retryable"],
+          "properties": {
+            "http_status": { "type": ["integer", "null"] },
+            "type": { "type": "string" },
+            "message": { "type": "string" },
+            "retryable": { "type": "boolean", "description": "A 400 is permanent for that request: false." }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "measured" } }, "required": ["status"] },
+          "then": {
+            "properties": {
+              "placeholder_fields": { "maxItems": 0 },
+              "sam_response": { "type": "object" },
+              "transport": { "type": "object", "properties": { "file_id": { "type": "string" }, "same_pixels_as_display_image": { "const": true } } },
+              "error": { "type": "null" },
+              "display_image": { "properties": { "sha256": { "type": "string" } } },
+              "prompt": {
+                "properties": { "input_text": { "type": "string" } },
+                "allOf": [
+                  {
+                    "if": { "properties": { "type": { "const": "box" } }, "required": ["type"] },
+                    "then": { "properties": { "objects": { "items": { "properties": { "box_px": { "type": "object" } } } } } }
+                  },
+                  {
+                    "if": { "properties": { "type": { "const": "point" } }, "required": ["type"] },
+                    "then": { "properties": { "objects": { "items": { "properties": { "point_px": { "type": "object" } } } } } }
+                  }
+                ]
+              },
+              "control": {
+                "if": { "properties": { "is_negative_control": { "const": true } }, "required": ["is_negative_control"] },
+                "then": { "properties": { "observed_detections": { "type": "integer" }, "passed": { "type": "boolean" } } }
+              }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "pending" } }, "required": ["status"] },
+          "then": { "properties": { "sam_response": { "type": "null" }, "error": { "type": "null" } } }
+        },
+        {
+          "if": { "properties": { "status": { "const": "api_error" } }, "required": ["status"] },
+          "then": { "properties": { "sam_response": { "type": "null" }, "error": { "type": "object" } } }
+        }
+      ]
+    },
+
+    "illustrative_images": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["label", "purpose", "source_inventory", "items"],
+      "description": "Legacy records: a picture generated by muse-image-1.0 from a text description of a SAR target, then segmented with the text prompt 'ship'. They are illustrations. They are NOT detections on SAR data and must never be drawn or counted as such.",
+      "properties": {
+        "label": { "$ref": "#/$defs/illustrative_label" },
+        "purpose": { "type": "string" },
+        "source_inventory": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["file", "records_total", "records_with_decodable_mask", "reason_not_decodable"],
+          "properties": {
+            "file": { "type": "string" },
+            "records_total": { "$ref": "#/$defs/uint" },
+            "records_with_decodable_mask": { "$ref": "#/$defs/uint" },
+            "reason_not_decodable": { "type": "string" }
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["illustration_id", "label", "target_id", "wgs84", "radar_metrics", "image", "generator", "segmentation", "source_record"],
+            "properties": {
+              "illustration_id": { "type": "string", "pattern": "^ill-[a-z0-9-]{3,48}$" },
+              "label": { "$ref": "#/$defs/illustrative_label" },
+              "target_id": { "type": "string", "pattern": "^SAR-TGT-[0-9]{3}$" },
+              "wgs84": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["lat", "lon"],
+                "properties": { "lat": { "type": "number" }, "lon": { "type": "number" } }
+              },
+              "radar_metrics": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["estimated_length_m", "estimated_beam_m", "peak_rcs_db", "snr_db"],
+                "properties": {
+                  "estimated_length_m": { "type": "number" },
+                  "estimated_beam_m": { "type": "number" },
+                  "peak_rcs_db": { "type": "number" },
+                  "snr_db": { "type": "number" }
+                }
+              },
+              "image": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["media_type", "preview_width", "preview_height", "sam_input_width", "sam_input_height", "sam_input_bytes", "location"],
+                "description": "The picture embedded in the benchmark JSON is a downscaled preview; sam-3.1 was run on a larger upload that was not stored. Mask and box coordinates live in the sam_input pixel space.",
+                "properties": {
+                  "media_type": { "const": "image/jpeg" },
+                  "preview_width": { "type": "integer", "minimum": 1 },
+                  "preview_height": { "type": "integer", "minimum": 1 },
+                  "sam_input_width": { "type": "integer", "minimum": 1, "description": "From the w= value of the response tags (image_width in the legacy record)." },
+                  "sam_input_height": { "type": "integer", "minimum": 1 },
+                  "sam_input_bytes": { "type": "integer", "minimum": 1, "description": "meta_files_upload.bytes of the legacy record." },
+                  "location": { "type": "string", "description": "Where the preview lives (the legacy data URL is not copied here)." }
+                }
+              },
+              "generator": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["model", "endpoint", "prompt", "latency_ms", "usd_per_image", "usd_per_image_source"],
+                "properties": {
+                  "model": { "const": "muse-image-1.0" },
+                  "endpoint": { "const": "/v1/images/generations" },
+                  "prompt": { "type": "string" },
+                  "latency_ms": { "type": "number" },
+                  "usd_per_image": { "type": "number", "description": "List price of muse-image-1.0 from https://dev.meta.ai/docs/pricing-rate-limits. The legacy artifact records no price, so this is NOT a measured per-call cost." },
+                  "usd_per_image_source": { "const": "pricing_page_list_price_not_in_legacy_artifact" }
+                }
+              },
+              "segmentation": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["model", "prompt_type", "prompt_target", "response_id", "latency_ms", "detections_count", "bounding_boxes", "masks", "raw_token_length"],
+                "properties": {
+                  "model": { "const": "sam-3.1" },
+                  "prompt_type": { "const": "text" },
+                  "prompt_target": { "type": "string" },
+                  "response_id": { "type": "string" },
+                  "latency_ms": { "type": "number" },
+                  "detections_count": { "$ref": "#/$defs/uint" },
+                  "bounding_boxes": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["x1", "y1", "x2", "y2", "image_width", "image_height", "bbox_width_px_legacy", "bbox_height_px_legacy", "legacy_size_convention"],
+                      "properties": {
+                        "x1": { "$ref": "#/$defs/uint" },
+                        "y1": { "$ref": "#/$defs/uint" },
+                        "x2": { "$ref": "#/$defs/uint" },
+                        "y2": { "$ref": "#/$defs/uint" },
+                        "image_width": { "type": "integer", "minimum": 1 },
+                        "image_height": { "type": "integer", "minimum": 1 },
+                        "bbox_width_px_legacy": { "type": "integer" },
+                        "bbox_height_px_legacy": { "type": "integer" },
+                        "legacy_size_convention": { "const": "x2_minus_x1_exclusive_one_pixel_short_of_inclusive_mask_size" }
+                      }
+                    }
+                  },
+                  "masks": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["declared_height", "declared_width", "marker", "legacy_encoding_label", "raw_length_chars", "preview", "preview_is_truncated", "decodable"],
+                      "properties": {
+                        "declared_height": { "type": "integer", "minimum": 1 },
+                        "declared_width": { "type": "integer", "minimum": 1 },
+                        "marker": { "enum": ["!", "~"] },
+                        "legacy_encoding_label": { "const": "lossless_rle", "description": "Mislabel in the legacy record: the payload is base85 + arithmetic coding, not run-length coding. Correct term: lossless." },
+                        "raw_length_chars": { "type": "integer", "minimum": 1, "description": "Length of the original full data string (the legacy parser stored only this and a 120-char preview)." },
+                        "preview": { "type": "string", "maxLength": 130, "description": "First 120 characters + '...' as stored. Not a mask; never fed to a decoder." },
+                        "preview_is_truncated": { "const": true },
+                        "decodable": { "const": false }
+                      }
+                    }
+                  },
+                  "raw_token_length": { "$ref": "#/$defs/uint" }
+                }
+              },
+              "source_record": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["file", "json_path"],
+                "properties": { "file": { "type": "string" }, "json_path": { "type": "string" } }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "illustrative_label": {
+      "const": "Imagen ilustrativa generada por muse-image-1.0 — no es una detección sobre SAR"
+    }
+  }
+}

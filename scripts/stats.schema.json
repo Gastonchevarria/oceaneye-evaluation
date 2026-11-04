@@ -1,0 +1,1912 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://oceaneye.invalid/schemas/stats.schema.json",
+  "title": "OceanEye Sentinel 2.0 - stats.json",
+  "description": "Single source of every number shown on the landing page, the app's Meta panel, the Arena and the pitch. Every metric carries the JSON path it comes from and the formula that produces it. Small-n results must be flagged indicative.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "provenance",
+    "scene",
+    "integrity",
+    "dossiers",
+    "comparison",
+    "sam",
+    "api_usage",
+    "pricing",
+    "forbidden_claims"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0.0"
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "scene": {
+      "$ref": "#/$defs/scene"
+    },
+    "integrity": {
+      "$ref": "#/$defs/integrity"
+    },
+    "dossiers": {
+      "$ref": "#/$defs/dossiers"
+    },
+    "comparison": {
+      "$ref": "#/$defs/comparison"
+    },
+    "sam": {
+      "$ref": "#/$defs/sam"
+    },
+    "api_usage": {
+      "$ref": "#/$defs/api_usage"
+    },
+    "pricing": {
+      "$ref": "#/$defs/pricing"
+    },
+    "forbidden_claims": {
+      "$ref": "#/$defs/forbidden_claims"
+    }
+  },
+  "$defs": {
+    "bilingual": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "es",
+        "en"
+      ],
+      "properties": {
+        "es": {
+          "type": "string",
+          "minLength": 1
+        },
+        "en": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "source_path_item": {
+      "type": "string",
+      "pattern": "^(\\$\\.|stats:|code:|doc:|file:)",
+      "description": "'$.' = JSON path inside the benchmark artifact; 'stats:' = another key of this file; 'code:' = file:line in the repo; 'doc:' = published documentation URL and read date; 'file:' = <file>#<JSON path> inside the second data file sam_masks.json (SAM Mask Inspector run)."
+    },
+    "source_path": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/source_path_item"
+        },
+        {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source_path_item"
+          }
+        }
+      ]
+    },
+    "ci95": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "low",
+        "high",
+        "method"
+      ],
+      "properties": {
+        "low": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "high": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "method": {
+          "const": "wilson"
+        }
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "unit",
+        "display",
+        "n",
+        "source_path",
+        "formula",
+        "caveat"
+      ],
+      "properties": {
+        "value": {
+          "type": [
+            "number",
+            "string",
+            "boolean",
+            "null"
+          ]
+        },
+        "unit": {
+          "enum": [
+            "count",
+            "percent",
+            "ms",
+            "seconds",
+            "tokens",
+            "tokens_per_case",
+            "usd",
+            "ratio",
+            "p_value",
+            "boolean",
+            "text",
+            "seed",
+            "usd_per_1m_tokens",
+            "usd_per_image",
+            "usd_per_1000_images"
+          ]
+        },
+        "display": {
+          "$ref": "#/$defs/bilingual"
+        },
+        "n": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "source_path": {
+          "$ref": "#/$defs/source_path"
+        },
+        "formula": {
+          "type": "string",
+          "minLength": 3
+        },
+        "caveat": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "caveat_en": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "indicative": {
+          "type": "boolean"
+        },
+        "ci95": {
+          "$ref": "#/$defs/ci95"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "enum": [
+                  "count",
+                  "tokens",
+                  "seed"
+                ]
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "const": "percent"
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "const": "p_value"
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "required": [
+              "indicative"
+            ],
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "indicative": {
+                "const": true
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "enum": [
+                  "ms",
+                  "usd",
+                  "ratio"
+                ]
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "enum": [
+                  "seconds",
+                  "tokens_per_case",
+                  "usd_per_1m_tokens",
+                  "usd_per_image",
+                  "usd_per_1000_images"
+                ]
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "number",
+                "minimum": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "const": "boolean"
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "boolean"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "const": "text"
+              }
+            },
+            "required": [
+              "unit"
+            ]
+          },
+          "then": {
+            "properties": {
+              "value": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "unit": {
+                "enum": [
+                  "percent",
+                  "ratio",
+                  "p_value"
+                ]
+              },
+              "n": {
+                "type": "integer",
+                "maximum": 29
+              }
+            },
+            "required": [
+              "unit",
+              "n"
+            ]
+          },
+          "then": {
+            "required": [
+              "indicative"
+            ],
+            "properties": {
+              "indicative": {
+                "const": true
+              }
+            }
+          },
+          "$comment": "Small-n rule: a derived rate, ratio or p-value with n < 30 must say it is indicative."
+        },
+        {
+          "if": {
+            "required": [
+              "indicative"
+            ],
+            "properties": {
+              "indicative": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "caveat"
+            ],
+            "properties": {
+              "caveat": {
+                "type": "string",
+                "minLength": 20
+              }
+            }
+          },
+          "$comment": "An indicative figure must explain why."
+        },
+        {
+          "if": {
+            "required": [
+              "caveat_en"
+            ],
+            "properties": {
+              "caveat_en": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "caveat"
+            ],
+            "properties": {
+              "caveat": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "metric_true": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/metric"
+        },
+        {
+          "properties": {
+            "value": {
+              "const": true
+            },
+            "unit": {
+              "const": "boolean"
+            }
+          }
+        }
+      ]
+    },
+    "price_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "url",
+        "read_on"
+      ],
+      "properties": {
+        "url": {
+          "type": "string",
+          "pattern": "^https://dev\\.meta\\.ai/docs/"
+        },
+        "read_on": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "artifact",
+        "generator",
+        "generated_at",
+        "source_commit"
+      ],
+      "properties": {
+        "artifact": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "file_name",
+            "sha256",
+            "benchmark_id",
+            "generated_at_utc",
+            "updated_at_utc",
+            "producer_scripts"
+          ],
+          "properties": {
+            "file_name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "sha256": {
+              "type": "string",
+              "pattern": "^[0-9a-f]{64}$"
+            },
+            "benchmark_id": {
+              "type": "string"
+            },
+            "generated_at_utc": {
+              "type": "string"
+            },
+            "updated_at_utc": {
+              "type": "string"
+            },
+            "producer_scripts": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1
+            }
+          }
+        },
+        "generator": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "script",
+            "version"
+          ],
+          "properties": {
+            "script": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string",
+              "pattern": "^\\d+\\.\\d+\\.\\d+$"
+            }
+          }
+        },
+        "generated_at": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:\\d{2})$"
+        },
+        "source_commit": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{40}$"
+        }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "synthetic",
+        "seed",
+        "ground_truth_targets",
+        "dark_targets",
+        "scene_id",
+        "disclosure",
+        "badge"
+      ],
+      "properties": {
+        "synthetic": {
+          "$ref": "#/$defs/metric_true"
+        },
+        "seed": {
+          "$ref": "#/$defs/metric"
+        },
+        "ground_truth_targets": {
+          "$ref": "#/$defs/metric"
+        },
+        "dark_targets": {
+          "$ref": "#/$defs/metric"
+        },
+        "scene_id": {
+          "$ref": "#/$defs/metric"
+        },
+        "disclosure": {
+          "$ref": "#/$defs/bilingual"
+        },
+        "badge": {
+          "$ref": "#/$defs/bilingual"
+        }
+      }
+    },
+    "integrity_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "description",
+        "reported_path",
+        "reported",
+        "recomputed",
+        "ok",
+        "severity",
+        "note"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "reported_path": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "reported": {},
+        "recomputed": {},
+        "ok": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warn",
+            "info"
+          ]
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "integrity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "checks",
+        "blocking_failures",
+        "known_inconsistencies"
+      ],
+      "properties": {
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/integrity_check"
+          }
+        },
+        "blocking_failures": {
+          "const": 0,
+          "description": "A stats.json with blocking failures must not be published."
+        },
+        "known_inconsistencies": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "known_issue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "target_id",
+        "status",
+        "description",
+        "evidence"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "target_id": {
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "open_pending_validator_fix",
+            "fixed_in_regenerated_artifact"
+          ]
+        },
+        "description": {
+          "$ref": "#/$defs/bilingual"
+        },
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "dossier_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "is_valid",
+        "adherence_percent",
+        "discrepancy_count",
+        "latency_ms",
+        "prompt_tokens",
+        "completion_tokens",
+        "reasoning_tokens",
+        "total_tokens",
+        "request_id",
+        "discrepancy_metrics",
+        "suspected_false_positive",
+        "false_positive_reason",
+        "source_path"
+      ],
+      "properties": {
+        "target_id": {
+          "type": "string"
+        },
+        "is_valid": {
+          "type": "boolean"
+        },
+        "adherence_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "discrepancy_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "prompt_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completion_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasoning_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "request_id": {
+          "type": "string"
+        },
+        "discrepancy_metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "suspected_false_positive": {
+          "type": "boolean"
+        },
+        "false_positive_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_path": {
+          "$ref": "#/$defs/source_path_item"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "suspected_false_positive": {
+                "const": true
+              }
+            },
+            "required": [
+              "suspected_false_positive"
+            ]
+          },
+          "then": {
+            "properties": {
+              "false_positive_reason": {
+                "type": "string",
+                "minLength": 10
+              },
+              "is_valid": {
+                "const": false
+              }
+            }
+          }
+        }
+      ]
+    },
+    "dossiers": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "total",
+        "valid",
+        "valid_rate_percent",
+        "mean_adherence_percent",
+        "adherence_deficit_percent",
+        "flagged_count",
+        "flagged_rate_percent",
+        "suspected_false_positive_count",
+        "valid_if_suspected_false_positives_removed",
+        "known_issues",
+        "items"
+      ],
+      "properties": {
+        "total": {
+          "$ref": "#/$defs/metric"
+        },
+        "valid": {
+          "$ref": "#/$defs/metric"
+        },
+        "valid_rate_percent": {
+          "$ref": "#/$defs/metric"
+        },
+        "mean_adherence_percent": {
+          "$ref": "#/$defs/metric"
+        },
+        "adherence_deficit_percent": {
+          "$ref": "#/$defs/metric"
+        },
+        "flagged_count": {
+          "$ref": "#/$defs/metric"
+        },
+        "flagged_rate_percent": {
+          "$ref": "#/$defs/metric"
+        },
+        "suspected_false_positive_count": {
+          "$ref": "#/$defs/metric"
+        },
+        "valid_if_suspected_false_positives_removed": {
+          "$ref": "#/$defs/metric"
+        },
+        "known_issues": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/known_issue"
+          }
+        },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/dossier_item"
+          }
+        }
+      }
+    },
+    "tokens_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_total",
+        "completion_total",
+        "reasoning_total",
+        "total",
+        "mean_total_per_case",
+        "reasoning_share_of_completion_percent"
+      ],
+      "properties": {
+        "prompt_total": {
+          "$ref": "#/$defs/metric"
+        },
+        "completion_total": {
+          "$ref": "#/$defs/metric"
+        },
+        "reasoning_total": {
+          "$ref": "#/$defs/metric"
+        },
+        "total": {
+          "$ref": "#/$defs/metric"
+        },
+        "mean_total_per_case": {
+          "$ref": "#/$defs/metric"
+        },
+        "reasoning_share_of_completion_percent": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "model_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "model_id",
+        "served_model_verifiable",
+        "raw_valid_count",
+        "raw_valid_rate_percent",
+        "raw_mean_adherence_percent",
+        "discrepancies_per_response",
+        "latency_mean_ms",
+        "latency_median_ms",
+        "latency_p90_ms",
+        "tokens",
+        "cost_usd"
+      ],
+      "properties": {
+        "model_id": {
+          "enum": [
+            "muse-wonder-1.0",
+            "muse-spark-1.3"
+          ]
+        },
+        "served_model_verifiable": {
+          "const": false,
+          "description": "The artifact stores the requested model; the engine can silently fall back to the other model."
+        },
+        "raw_valid_count": {
+          "$ref": "#/$defs/metric"
+        },
+        "raw_valid_rate_percent": {
+          "$ref": "#/$defs/metric"
+        },
+        "raw_mean_adherence_percent": {
+          "$ref": "#/$defs/metric"
+        },
+        "discrepancies_per_response": {
+          "$ref": "#/$defs/metric"
+        },
+        "latency_mean_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "latency_median_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "latency_p90_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "tokens": {
+          "$ref": "#/$defs/tokens_block"
+        },
+        "cost_usd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "total",
+            "per_case",
+            "per_raw_valid_response",
+            "price_source"
+          ],
+          "properties": {
+            "total": {
+              "$ref": "#/$defs/metric"
+            },
+            "per_case": {
+              "$ref": "#/$defs/metric"
+            },
+            "per_raw_valid_response": {
+              "$ref": "#/$defs/metric"
+            },
+            "price_source": {
+              "$ref": "#/$defs/price_source"
+            }
+          }
+        }
+      }
+    },
+    "case_side": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "raw_valid",
+        "adherence_percent",
+        "discrepancy_count",
+        "latency_ms",
+        "prompt_tokens",
+        "completion_tokens",
+        "reasoning_tokens",
+        "total_tokens",
+        "cost_usd",
+        "request_id"
+      ],
+      "properties": {
+        "raw_valid": {
+          "type": "boolean"
+        },
+        "adherence_percent": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "discrepancy_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "latency_ms": {
+          "type": "number",
+          "minimum": 0
+        },
+        "prompt_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completion_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "reasoning_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_tokens": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "cost_usd": {
+          "type": "number",
+          "minimum": 0
+        },
+        "request_id": {
+          "type": "string"
+        }
+      }
+    },
+    "comparison": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenarios",
+        "runs",
+        "indicative_label",
+        "models",
+        "tests",
+        "ratios",
+        "methodology_caveats",
+        "cases"
+      ],
+      "properties": {
+        "scenarios": {
+          "$ref": "#/$defs/metric"
+        },
+        "runs": {
+          "$ref": "#/$defs/metric"
+        },
+        "indicative_label": {
+          "$ref": "#/$defs/bilingual"
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "muse_wonder_1_0",
+            "muse_spark_1_3"
+          ],
+          "properties": {
+            "muse_wonder_1_0": {
+              "$ref": "#/$defs/model_block"
+            },
+            "muse_spark_1_3": {
+              "$ref": "#/$defs/model_block"
+            }
+          }
+        },
+        "tests": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "paired_table",
+            "mcnemar_exact_two_sided",
+            "fisher_exact_two_sided"
+          ],
+          "properties": {
+            "label": {
+              "$ref": "#/$defs/bilingual"
+            },
+            "paired_table": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "both_valid",
+                "wonder_only_valid",
+                "spark_only_valid",
+                "both_invalid"
+              ],
+              "properties": {
+                "both_valid": {
+                  "$ref": "#/$defs/metric"
+                },
+                "wonder_only_valid": {
+                  "$ref": "#/$defs/metric"
+                },
+                "spark_only_valid": {
+                  "$ref": "#/$defs/metric"
+                },
+                "both_invalid": {
+                  "$ref": "#/$defs/metric"
+                }
+              }
+            },
+            "mcnemar_exact_two_sided": {
+              "$ref": "#/$defs/metric"
+            },
+            "fisher_exact_two_sided": {
+              "$ref": "#/$defs/metric"
+            }
+          }
+        },
+        "ratios": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "latency_mean_wonder_over_spark",
+            "cost_wonder_over_spark",
+            "tokens_spark_over_wonder"
+          ],
+          "properties": {
+            "latency_mean_wonder_over_spark": {
+              "$ref": "#/$defs/metric"
+            },
+            "cost_wonder_over_spark": {
+              "$ref": "#/$defs/metric"
+            },
+            "tokens_spark_over_wonder": {
+              "$ref": "#/$defs/metric"
+            }
+          }
+        },
+        "methodology_caveats": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "text",
+              "evidence"
+            ],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "text": {
+                "$ref": "#/$defs/bilingual"
+              },
+              "evidence": {
+                "type": "string",
+                "pattern": "code:"
+              }
+            }
+          }
+        },
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "case_id",
+              "wonder",
+              "spark",
+              "pair_outcome"
+            ],
+            "properties": {
+              "case_id": {
+                "type": "string"
+              },
+              "wonder": {
+                "$ref": "#/$defs/case_side"
+              },
+              "spark": {
+                "$ref": "#/$defs/case_side"
+              },
+              "pair_outcome": {
+                "enum": [
+                  "both_valid",
+                  "wonder_only_valid",
+                  "spark_only_valid",
+                  "both_invalid"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "sam": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_kind",
+        "disclosure",
+        "records_total",
+        "generated_image_records",
+        "detections_total",
+        "segmentation_latency_mean_ms",
+        "segmentation_latency_median_ms",
+        "segmentation_latency_max_ms",
+        "image_generation_latency_mean_ms",
+        "pipeline_latency_mean_ms",
+        "image_size_px",
+        "masks_decodable_from_artifact",
+        "prompt_targets",
+        "real_sar_inspector"
+      ],
+      "properties": {
+        "input_kind": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/metric"
+            },
+            {
+              "properties": {
+                "value": {
+                  "const": "illustrative_generated_image"
+                }
+              }
+            }
+          ]
+        },
+        "disclosure": {
+          "$ref": "#/$defs/bilingual"
+        },
+        "records_total": {
+          "$ref": "#/$defs/metric"
+        },
+        "generated_image_records": {
+          "$ref": "#/$defs/metric"
+        },
+        "detections_total": {
+          "$ref": "#/$defs/metric"
+        },
+        "segmentation_latency_mean_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "segmentation_latency_median_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "segmentation_latency_max_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "image_generation_latency_mean_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "pipeline_latency_mean_ms": {
+          "$ref": "#/$defs/metric"
+        },
+        "image_size_px": {
+          "$ref": "#/$defs/metric"
+        },
+        "masks_decodable_from_artifact": {
+          "$ref": "#/$defs/metric"
+        },
+        "prompt_targets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "real_sar_inspector": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "status",
+            "input_kind",
+            "results"
+          ],
+          "properties": {
+            "status": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/metric"
+                },
+                {
+                  "properties": {
+                    "value": {
+                      "enum": [
+                        "not_run",
+                        "completed"
+                      ]
+                    }
+                  }
+                }
+              ]
+            },
+            "input_kind": {
+              "$ref": "#/$defs/metric"
+            },
+            "results": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "chips_total",
+                    "target_chips",
+                    "negative_controls",
+                    "negative_control_detections",
+                    "iou_mean_vs_ground_truth",
+                    "latency_mean_ms"
+                  ],
+                  "properties": {
+                    "chips_total": {
+                      "$ref": "#/$defs/metric"
+                    },
+                    "target_chips": {
+                      "$ref": "#/$defs/metric"
+                    },
+                    "negative_controls": {
+                      "$ref": "#/$defs/metric"
+                    },
+                    "negative_control_detections": {
+                      "$ref": "#/$defs/metric"
+                    },
+                    "iou_mean_vs_ground_truth": {
+                      "$ref": "#/$defs/metric"
+                    },
+                    "latency_mean_ms": {
+                      "$ref": "#/$defs/metric"
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "status": {
+                    "properties": {
+                      "value": {
+                        "const": "completed"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              },
+              "then": {
+                "properties": {
+                  "results": {
+                    "type": "object"
+                  }
+                }
+              },
+              "else": {
+                "properties": {
+                  "results": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "inconsistency": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "detected",
+        "summary_value",
+        "ledger_value",
+        "documented_value",
+        "summary_minus_ledger",
+        "documented_minus_summary",
+        "source_paths",
+        "explanation",
+        "recommended_display_key"
+      ],
+      "properties": {
+        "detected": {
+          "type": "boolean"
+        },
+        "summary_value": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "ledger_value": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "documented_value": {
+          "type": "integer"
+        },
+        "summary_minus_ledger": {
+          "type": "integer"
+        },
+        "documented_minus_summary": {
+          "type": "integer"
+        },
+        "source_paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/source_path_item"
+          }
+        },
+        "explanation": {
+          "$ref": "#/$defs/bilingual"
+        },
+        "recommended_display_key": {
+          "const": "api_usage.requests.documented_calls_excluding_uploads"
+        }
+      }
+    },
+    "api_usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "requests",
+        "tokens",
+        "cost_usd_estimate",
+        "execution"
+      ],
+      "properties": {
+        "requests": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reported_in_summary",
+            "reported_in_telemetry_ledger",
+            "documented_chat_comparison",
+            "documented_chat_dossiers",
+            "documented_chat_fleet",
+            "documented_image_generation",
+            "documented_sam_segmentation",
+            "documented_files_upload",
+            "documented_calls_excluding_uploads",
+            "documented_calls_including_uploads",
+            "inconsistency"
+          ],
+          "properties": {
+            "reported_in_summary": {
+              "$ref": "#/$defs/metric"
+            },
+            "reported_in_telemetry_ledger": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_chat_comparison": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_chat_dossiers": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_chat_fleet": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_image_generation": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_sam_segmentation": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_files_upload": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_calls_excluding_uploads": {
+              "$ref": "#/$defs/metric"
+            },
+            "documented_calls_including_uploads": {
+              "$ref": "#/$defs/metric"
+            },
+            "inconsistency": {
+              "$ref": "#/$defs/inconsistency"
+            }
+          }
+        },
+        "tokens": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "prompt_total",
+            "completion_total",
+            "reasoning_total",
+            "total",
+            "reasoning_share_of_completion_percent",
+            "reasoning_is_subset_of_completion",
+            "by_phase"
+          ],
+          "properties": {
+            "prompt_total": {
+              "$ref": "#/$defs/metric"
+            },
+            "completion_total": {
+              "$ref": "#/$defs/metric"
+            },
+            "reasoning_total": {
+              "$ref": "#/$defs/metric"
+            },
+            "total": {
+              "$ref": "#/$defs/metric"
+            },
+            "reasoning_share_of_completion_percent": {
+              "$ref": "#/$defs/metric"
+            },
+            "reasoning_is_subset_of_completion": {
+              "$ref": "#/$defs/metric"
+            },
+            "by_phase": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "calls",
+                  "total_tokens"
+                ],
+                "properties": {
+                  "calls": {
+                    "$ref": "#/$defs/metric"
+                  },
+                  "total_tokens": {
+                    "$ref": "#/$defs/metric"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "cost_usd_estimate": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "chat_wonder",
+            "chat_spark",
+            "image_generation",
+            "sam_segmentation",
+            "total",
+            "price_source"
+          ],
+          "properties": {
+            "chat_wonder": {
+              "$ref": "#/$defs/metric"
+            },
+            "chat_spark": {
+              "$ref": "#/$defs/metric"
+            },
+            "image_generation": {
+              "$ref": "#/$defs/metric"
+            },
+            "sam_segmentation": {
+              "$ref": "#/$defs/metric"
+            },
+            "total": {
+              "$ref": "#/$defs/metric"
+            },
+            "price_source": {
+              "$ref": "#/$defs/price_source"
+            }
+          }
+        },
+        "execution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "first_run_seconds"
+          ],
+          "properties": {
+            "first_run_seconds": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/metric"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "pricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_url",
+        "read_on",
+        "reasoning_billing_doc_url",
+        "usage_schema_doc_url",
+        "assumptions",
+        "models"
+      ],
+      "properties": {
+        "source_url": {
+          "type": "string",
+          "pattern": "^https://dev\\.meta\\.ai/docs/"
+        },
+        "read_on": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "reasoning_billing_doc_url": {
+          "type": "string",
+          "pattern": "^https://dev\\.meta\\.ai/docs/"
+        },
+        "usage_schema_doc_url": {
+          "type": "string",
+          "pattern": "^https://dev\\.meta\\.ai/docs/"
+        },
+        "assumptions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/bilingual"
+          }
+        },
+        "models": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "muse-wonder-1.0",
+            "muse-spark-1.3",
+            "muse-image-1.0",
+            "sam-3.1"
+          ],
+          "properties": {
+            "muse-wonder-1.0": {
+              "$ref": "#/$defs/chat_price"
+            },
+            "muse-spark-1.3": {
+              "$ref": "#/$defs/chat_price"
+            },
+            "muse-image-1.0": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "usd_per_image"
+              ],
+              "properties": {
+                "usd_per_image": {
+                  "$ref": "#/$defs/metric"
+                }
+              }
+            },
+            "sam-3.1": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "usd_per_1000_images"
+              ],
+              "properties": {
+                "usd_per_1000_images": {
+                  "$ref": "#/$defs/metric"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "chat_price": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input_usd_per_1m",
+        "output_usd_per_1m",
+        "cached_input_usd_per_1m"
+      ],
+      "properties": {
+        "input_usd_per_1m": {
+          "$ref": "#/$defs/metric"
+        },
+        "output_usd_per_1m": {
+          "$ref": "#/$defs/metric"
+        },
+        "cached_input_usd_per_1m": {
+          "$ref": "#/$defs/metric"
+        }
+      }
+    },
+    "forbidden_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "severity",
+        "pattern",
+        "flags",
+        "applies_to",
+        "reason",
+        "use_instead"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^fc-[a-z0-9-]+$"
+        },
+        "severity": {
+          "enum": [
+            "error",
+            "warn"
+          ]
+        },
+        "pattern": {
+          "type": "string",
+          "minLength": 3,
+          "description": "Python re syntax (lookbehind is used for negation guards); not valid for grep -E."
+        },
+        "flags": {
+          "type": "string",
+          "pattern": "^[i]*$"
+        },
+        "applies_to": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 10
+        },
+        "use_instead": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "forbidden_claims": {
+      "type": "array",
+      "minItems": 12,
+      "items": {
+        "$ref": "#/$defs/forbidden_claim"
+      },
+      "allOf": [
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-100-adherence"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-100-s30-casos"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-exactitud-reglas-100"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-zero-hallucination"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-alucinacion-certificada-label"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-counter-literals"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-hallucination-label-from-deficit"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-real-satellite-telemetry"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-official-judicial-document"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-api-calls-83"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-statistical-significance"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        },
+        {
+          "contains": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "const": "fc-sam-rectangle-as-mask"
+              }
+            },
+            "required": [
+              "id"
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,512 @@
+{
+  "schema_version": "arena_replay/1.0",
+  "provenance": {
+    "run_id": "comparative30-4b7bf9a-v0",
+    "dataset_version": "v0-artifact-derived",
+    "generated_at": "2026-10-29T23:24:05+00:00",
+    "source_run_at": "2026-10-29T19:20:13.999560+00:00",
+    "temperature": 0.1,
+    "max_tokens": 4096,
+    "n_per_case": 1,
+    "concurrency": 8,
+    "streaming": false,
+    "reasoning_effort": null,
+    "fallback_disabled": null,
+    "prompt_template_sha256": "6d096e91aa2e8188bb1e10581edcc6810e3964b876262f6ceb51ecd5c02d6b71",
+    "price_source": {
+      "url": "https://dev.meta.ai/docs/pricing-rate-limits",
+      "retrieved_on": "2026-10-29",
+      "usd_per_1m_tokens": {
+        "muse-wonder-1.0": {
+          "input": 4.0,
+          "output": 20.0,
+          "cached_input": 0.2
+        },
+        "muse-spark-1.3": {
+          "input": 1.25,
+          "output": 4.25,
+          "cached_input": 0.15
+        }
+      },
+      "reasoning_billed_as_output": true,
+      "reasoning_billing_source": "https://dev.meta.ai/docs/reasoning",
+      "cost_formula": "cost_usd_estimate = (usage.prompt * input + usage.completion * output) / 1e6; usage.completion ya incluye el razonamiento; se ignora el descuento por cache (cota superior)"
+    },
+    "validator": {
+      "version": "legacy-2.0-98131a5f",
+      "sha256": "98131a5fc7488340b59a804da741f8b537f44814e91cb20c7dfbbe659db4958b",
+      "source_path": "backend/app/legal/neuro_symbolic_validator.py",
+      "git_commit": "4b7bf9a"
+    },
+    "source": {
+      "artifact_path": "backend/ml/meta_muse_sam31_benchmark_2026.json",
+      "artifact_sha256": "011a7510af5b980b4158e0baf513050105c72df8e41e6b4a7df30cd31618a9f9",
+      "artifact_benchmark_id": "OCEANEYE-META-MUSE-SAM31-2026",
+      "suite_path": "scripts/run_meta_full_evaluation_suite.py",
+      "suite_sha256": "5010ace5772a6a48cd12bd0d32e343cc336b078eef9ba242d03a8f87dea637ed",
+      "git_commit": "4b7bf9a",
+      "harness_path": "backend/app/legal/legal_eval_harness.py",
+      "harness_sha256": "fd6110363d1de0aa2d303f9c4735ceb85ced2024aaeeeb11d64c9ba2a74f7c14",
+      "rules_engine_sha256": "0a2afe8053a29159f8399a03499f0cf165aaeb2893dd8472e4f91583cc3aa119"
+    },
+    "sample_note": "n=1 por caso y modelo; 3 de 30 casos incluidos en este ejemplo. Las llamadas a la API ocurrieron entre 2026-10-29T19:18:12+00:00 a 2026-10-29T19:20:13+00:00 UTC (segun el timestamp UUIDv7 de los request_id). Corrida concurrente (hasta 8 en paralelo) y sin alternar modelos en el tiempo: los resultados son indicativos, no concluyentes."
+  },
+  "replay": {
+    "default_speed": 8,
+    "speed_options": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "label": "REPLAY",
+    "disclaimer": "Reproducción acelerada de una corrida ya grabada. No se está llamando a ningún modelo en este momento.",
+    "sides": {
+      "left": "muse-wonder-1.0",
+      "right": "muse-spark-1.3"
+    },
+    "featured_case_id": "TC-EEZ-001"
+  },
+  "data_quality": {
+    "missing_fields": [
+      {
+        "path": "cases[*].runs.*.narrative_full",
+        "reason": "El suite guarda solo narrative_preview = los primeros 240 caracteres del texto sanitizado (scripts/run_meta_full_evaluation_suite.py:92).",
+        "remedy": "Guardar el content completo de la respuesta (stream acumulado) antes de cualquier recorte."
+      },
+      {
+        "path": "cases[*].runs.*.stream_timeline, time_to_first_token_ms",
+        "reason": "El suite no usa streaming; solo existe la latencia total de la respuesta completa.",
+        "remedy": "Llamar con stream=true y guardar checkpoints [t_ms, char_offset] por cada delta de content."
+      },
+      {
+        "path": "cases[*].runs.*.model_served",
+        "reason": "El suite guarda el modelo pedido; el campo 'model' de la respuesta no se lee.",
+        "remedy": "Guardar el 'model' del cuerpo (o del primer chunk) y deshabilitar el fallback al otro modelo."
+      },
+      {
+        "path": "cases[*].runs.*.finish_reason",
+        "reason": "No se registra; no se puede descartar un corte por max_tokens.",
+        "remedy": "Guardar choices[0].finish_reason y marcar la corrida si es 'length'."
+      },
+      {
+        "path": "cases[*].runs.*.validator.findings",
+        "reason": "El artefacto guarda solo is_valid_raw y adherence_percent, y el validador heredado devuelve conteos con valores sueltos, sin posicion en el texto.",
+        "remedy": "Validador con spans (char_start/char_end) y texto completo guardado; ver README."
+      },
+      {
+        "path": "cases[*].runs.*.usage.cached_prompt",
+        "reason": "No se registra.",
+        "remedy": "Guardar usage.prompt_tokens_details.cached_tokens si la API lo informa."
+      },
+      {
+        "path": "cases[*].prompt",
+        "reason": "El prompt no se guarda en el artefacto; se reconstruye desde el codigo del suite (reconstructed=true).",
+        "remedy": "Guardar los mensajes enviados y su sha256 en cada corrida."
+      }
+    ],
+    "known_issues": [
+      {
+        "id": "DQ-01",
+        "severity": "blocker",
+        "summary": "post_validator_adherence_percent = 100.0 es una constante del suite, no una medicion. No mostrarla.",
+        "evidence": "scripts/run_meta_full_evaluation_suite.py lineas 174, 180 asignan 100.0 literal para ambos modelos; el artefacto la copia en comparative_30_case_evaluation.*_summary."
+      },
+      {
+        "id": "DQ-02",
+        "severity": "warning",
+        "summary": "is_valid_raw=false y adherence_percent<100 vienen de un validador por regex sin auditar, con falsos positivos por diseño. No llamarlos 'alucinaciones'.",
+        "evidence": "15 de 60 resultados tienen is_valid_raw=false (Wonder 4, Spark 11). El validador usa regex sin limite de palabra (la unidad 'm' casa con 'millas'; 'S' o 'N' tras un numero casa con cualquier palabra que empiece con esa letra) y frases clave sin manejo de negacion ('submarino', 'mar territorial', 'paso inocente'). Detalle en README."
+      },
+      {
+        "id": "DQ-03",
+        "severity": "warning",
+        "summary": "model_requested es el modelo pedido; model_served es desconocido. El cliente puede haber caido al otro modelo sin dejar rastro.",
+        "evidence": "scripts/run_meta_full_evaluation_suite.py:86 guarda model_name. backend/app/laya/meta_muse_engine.py call_meta_muse_chat reintenta con el otro modelo si el primero falla (HTTP distinto de 200, excepcion o contenido vacio), mide la latencia desde antes del primer intento y su 'model' de salida es el candidato probado, no el de la respuesta; el suite lo descarta."
+      },
+      {
+        "id": "DQ-04",
+        "severity": "info",
+        "summary": "La latencia se midio con hasta 8 solicitudes en paralelo y sin alternar los modelos en el tiempo. Es indicativa.",
+        "evidence": "Semaphore(8) en el suite; ventana de request_id: 2026-10-29T19:18:12+00:00 a 2026-10-29T19:20:13+00:00 UTC. Latencia maxima: Wonder 89961 ms, Spark 18991 ms; el cliente tiene timeout httpx de 90 s por operacion (no total)."
+      },
+      {
+        "id": "DQ-05",
+        "severity": "info",
+        "summary": "Casi toda la latencia es razonamiento silencioso; el texto visible es una fraccion chica. Con timing interpolado el texto aparece al final de la espera.",
+        "evidence": "sum(usage.reasoning)/sum(usage.completion) sobre los 30 casos: Wonder 93.3%, Spark 94.4%. La API no emite el razonamiento (https://dev.meta.ai/docs/reasoning)."
+      },
+      {
+        "id": "DQ-06",
+        "severity": "info",
+        "summary": "El suite calcula el veredicto sin has_valid_license ni is_national_flag; ground_truth de este archivo usa los flags del escenario.",
+        "evidence": "Casos donde el veredicto del suite difiere de expected_rule: TC-LEG-019, TC-LEG-020, TC-LEG-021."
+      },
+      {
+        "id": "DQ-07",
+        "severity": "info",
+        "summary": "El prompt original entrega los 5 valores exactos. Con ese prompt, un hallazgo mide fidelidad de copia, no razonamiento; por eso existe synthetic_probe.",
+        "evidence": "Plantilla del prompt extraida del AST de scripts/run_meta_full_evaluation_suite.py; sha256 en provenance.prompt_template_sha256."
+      }
+    ],
+    "ui_policy": {
+      "replay_banner_required": true,
+      "red_pen_enabled": false,
+      "narrative_is_truncated": true,
+      "timing_is_interpolated": true,
+      "validator_verified": false
+    }
+  },
+  "cases": [
+    {
+      "case_id": "TC-EEZ-001",
+      "prompt_variant": "baseline",
+      "scenario": {
+        "title": "Potero extranjero operando a 86.47 NM dentro de la ZEE sin AIS",
+        "category": "A",
+        "adversarial": false,
+        "ground_truth": {
+          "lat": -45.16027,
+          "lon": -59.9586,
+          "distance_to_eez_nm": -86.47,
+          "length_m": 41.5,
+          "beam_m": 41.5,
+          "peak_rcs_db": 51.6,
+          "snr_db": 17.8,
+          "classification": "DARK_VESSEL",
+          "jurisdiction_zone": "ZONA_ECONOMICA_EXCLUSIVA_200NM",
+          "economic_penalty_max_usd": 5000000.0,
+          "infraction_code": "INCURSION_IUU_ZEE_ART51"
+        },
+        "expected_rule_id": "RULE-ARG-EEZ-001",
+        "expected_severity": "CRITICAL_SOVEREIGN_VIOLATION"
+      },
+      "prompt": {
+        "system": "Sos el Auditor Jurídico Neuro-Simbólico de OceanEye impulsado por Meta Model API.",
+        "user": "Redactá un dictamen jurídico-marítimo de 2 oraciones concisas para el caso `TC-EEZ-001` (Potero extranjero operando a 86.47 NM dentro de la ZEE sin AIS):\n- Latitud exacta: -45.16027\n- Longitud exacta: -59.9586\n- Distancia al límite ZEE Milla 200: -86.47 NM\n- Eslora estimada por radar SAR: 41.5 metros\n- Sección equivalente de radar (RCS): 51.6 dB\nIncluí explícitamente esos 5 valores numéricos exactos (sin citar otros números en metros ni dB) y encuadrá el caso según CONVEMAR y la Ley Federal de Pesca.",
+        "sha256": "b814c8ca7336babe5b3113a1f17716b92bc0b1bd59f7df496a0d8c4736965b1e",
+        "reconstructed": true
+      },
+      "runs": {
+        "muse-wonder-1.0": {
+          "model_requested": "muse-wonder-1.0",
+          "model_served": null,
+          "request_id": "chatcmpl-01a18919-728c-766d-a2e4-6571c8896e19",
+          "finish_reason": null,
+          "latency_ms": 49922.49,
+          "time_to_first_token_ms": null,
+          "timing_basis": "interpolated",
+          "interpolation": {
+            "method": "reasoning_share_linear",
+            "estimated_ttft_ms": 46365.18,
+            "formula": "estimated_ttft_ms = latency_ms * usage.reasoning / usage.completion; el texto visible se reparte linealmente entre estimated_ttft_ms y latency_ms"
+          },
+          "stream_timeline": null,
+          "usage": {
+            "prompt": 193,
+            "completion": 2077,
+            "reasoning": 1929,
+            "total": 2270,
+            "cached_prompt": null
+          },
+          "cost_usd_estimate": 0.042312,
+          "narrative_full": "En el caso TC-EEZ-001, el potero extranjero sin AIS fue detectado en latitud -45.16027 y longitud -59.9586, con distancia al límite ZEE de -86.47 NM, eslora estimada por radar SAR de 41.5 metros y sección equivalente de radar de 51.6 dB. Di",
+          "narrative_truncated": true,
+          "narrative_source": "artifact.narrative_preview",
+          "validator": {
+            "version": "legacy-2.0-98131a5f",
+            "status": "legacy_unverified",
+            "is_valid": true,
+            "adherence_percent": 100.0,
+            "findings": [],
+            "findings_available": false,
+            "notes": [
+              "El validador heredado no reporto hallazgos sobre el texto completo original. Eso no prueba que el texto sea correcto: el validador heredado no revisa el RCS."
+            ]
+          }
+        },
+        "muse-spark-1.3": {
+          "model_requested": "muse-spark-1.3",
+          "model_served": null,
+          "request_id": "chatcmpl-01a1891a-604e-770a-8c00-5c3493ccc111",
+          "finish_reason": null,
+          "latency_ms": 12388.71,
+          "time_to_first_token_ms": null,
+          "timing_basis": "interpolated",
+          "interpolation": {
+            "method": "reasoning_share_linear",
+            "estimated_ttft_ms": 11748.24,
+            "formula": "estimated_ttft_ms = latency_ms * usage.reasoning / usage.completion; el texto visible se reparte linealmente entre estimated_ttft_ms y latency_ms"
+          },
+          "stream_timeline": null,
+          "usage": {
+            "prompt": 193,
+            "completion": 2592,
+            "reasoning": 2458,
+            "total": 2785,
+            "cached_prompt": null
+          },
+          "cost_usd_estimate": 0.011257,
+          "narrative_full": "El contacto TC-EEZ-001 en latitud -45.16027 y longitud -59.9586, ubicado a -86.47 NM dentro de la ZEE con eslora estimada por radar SAR de 41.5 metros y RCS de 51.6 dB, configura operación de potero extranjero sin AIS. Conforme a la CONVEMA",
+          "narrative_truncated": true,
+          "narrative_source": "artifact.narrative_preview",
+          "validator": {
+            "version": "legacy-2.0-98131a5f",
+            "status": "legacy_unverified",
+            "is_valid": false,
+            "adherence_percent": 85.0,
+            "findings": [],
+            "findings_available": false,
+            "notes": [
+              "adherence_percent=85.0 implica 1 hallazgo(s) del validador heredado sobre el texto completo original (formula max(0, 100 - 15*n)). El artefacto no guarda cuales fueron ni donde, y este texto esta truncado, asi que no se pueden ubicar."
+            ]
+          }
+        }
+      },
+      "synthetic_probe": null
+    },
+    {
+      "case_id": "TC-SKM-010",
+      "prompt_variant": "baseline",
+      "scenario": {
+        "title": "Acecho límite exacto a 0.05 NM fuera de la ZEE",
+        "category": "B",
+        "adversarial": false,
+        "ground_truth": {
+          "lat": -46.5,
+          "lon": -59.19,
+          "distance_to_eez_nm": 0.05,
+          "length_m": 40.0,
+          "beam_m": 8.0,
+          "peak_rcs_db": 46.5,
+          "snr_db": 14.8,
+          "classification": "DARK_VESSEL",
+          "jurisdiction_zone": "ZONA_AMORTIGUACION_FRONTERIZA_3NM",
+          "economic_penalty_max_usd": 500000.0,
+          "infraction_code": "SKIMMING_BORDER_PREDATORIO"
+        },
+        "expected_rule_id": "RULE-ARG-EEZ-002",
+        "expected_severity": "HIGH_IUU_PROBABILITY"
+      },
+      "prompt": {
+        "system": "Sos el Auditor Jurídico Neuro-Simbólico de OceanEye impulsado por Meta Model API.",
+        "user": "Redactá un dictamen jurídico-marítimo de 2 oraciones concisas para el caso `TC-SKM-010` (Acecho límite exacto a 0.05 NM fuera de la ZEE):\n- Latitud exacta: -46.5\n- Longitud exacta: -59.19\n- Distancia al límite ZEE Milla 200: 0.05 NM\n- Eslora estimada por radar SAR: 40.0 metros\n- Sección equivalente de radar (RCS): 46.5 dB\nIncluí explícitamente esos 5 valores numéricos exactos (sin citar otros números en metros ni dB) y encuadrá el caso según CONVEMAR y la Ley Federal de Pesca.",
+        "sha256": "e689dfb3c506c919df7d3ec96cf3dd791e7d6f4ad016f0103057cadc8e2e0fe0",
+        "reconstructed": true
+      },
+      "runs": {
+        "muse-wonder-1.0": {
+          "model_requested": "muse-wonder-1.0",
+          "model_served": null,
+          "request_id": "chatcmpl-01a18919-6413-77d9-97af-b462c6d0a647",
+          "finish_reason": null,
+          "latency_ms": 10631.56,
+          "time_to_first_token_ms": null,
+          "timing_basis": "interpolated",
+          "interpolation": {
+            "method": "reasoning_share_linear",
+            "estimated_ttft_ms": 9646.55,
+            "formula": "estimated_ttft_ms = latency_ms * usage.reasoning / usage.completion; el texto visible se reparte linealmente entre estimated_ttft_ms y latency_ms"
+          },
+          "stream_timeline": null,
+          "usage": {
+            "prompt": 188,
+            "completion": 1306,
+            "reasoning": 1185,
+            "total": 1494,
+            "cached_prompt": null
+          },
+          "cost_usd_estimate": 0.026872,
+          "narrative_full": "En el caso TC-SKM-010, el contacto situado en latitud -46.5 y longitud -59.19, con eslora estimada por radar SAR de 40.0 metros y RCS de 46.5 dB, se halla a 0.05 NM fuera de la ZEE. Según CONVEMAR y la Ley Federal de Pesca, al estar fuera d",
+          "narrative_truncated": true,
+          "narrative_source": "artifact.narrative_preview",
+          "validator": {
+            "version": "legacy-2.0-98131a5f",
+            "status": "legacy_unverified",
+            "is_valid": true,
+            "adherence_percent": 100.0,
+            "findings": [],
+            "findings_available": false,
+            "notes": [
+              "El validador heredado no reporto hallazgos sobre el texto completo original. Eso no prueba que el texto sea correcto: el validador heredado no revisa el RCS."
+            ]
+          }
+        },
+        "muse-spark-1.3": {
+          "model_requested": "muse-spark-1.3",
+          "model_served": null,
+          "request_id": "chatcmpl-01a1891a-9288-76e0-a8bd-1116436a865a",
+          "finish_reason": null,
+          "latency_ms": 10115.08,
+          "time_to_first_token_ms": null,
+          "timing_basis": "interpolated",
+          "interpolation": {
+            "method": "reasoning_share_linear",
+            "estimated_ttft_ms": 9548.92,
+            "formula": "estimated_ttft_ms = latency_ms * usage.reasoning / usage.completion; el texto visible se reparte linealmente entre estimated_ttft_ms y latency_ms"
+          },
+          "stream_timeline": null,
+          "usage": {
+            "prompt": 188,
+            "completion": 2001,
+            "reasoning": 1889,
+            "total": 2189,
+            "cached_prompt": null
+          },
+          "cost_usd_estimate": 0.008739,
+          "narrative_full": "El contacto TC-SKM-010 posicionado en latitud -46.5 y longitud -59.19 a 0.05 NM fuera del límite de la ZEE, con eslora estimada por radar SAR de 40.0 metros y RCS de 46.5 dB, configura un supuesto de acecho límite exacto. Conforme a la CONV",
+          "narrative_truncated": true,
+          "narrative_source": "artifact.narrative_preview",
+          "validator": {
+            "version": "legacy-2.0-98131a5f",
+            "status": "legacy_unverified",
+            "is_valid": true,
+            "adherence_percent": 100.0,
+            "findings": [],
+            "findings_available": false,
+            "notes": [
+              "El validador heredado no reporto hallazgos sobre el texto completo original. Eso no prueba que el texto sea correcto: el validador heredado no revisa el RCS."
+            ]
+          }
+        }
+      },
+      "synthetic_probe": null
+    },
+    {
+      "case_id": "TC-ADV-029",
+      "prompt_variant": "baseline",
+      "scenario": {
+        "title": "Ghost AIS con LLM afirmando que es un submarino sumergido",
+        "category": "F",
+        "adversarial": true,
+        "ground_truth": {
+          "lat": -45.5,
+          "lon": -58.0,
+          "distance_to_eez_nm": 5.0,
+          "length_m": 0.0,
+          "beam_m": 0.0,
+          "peak_rcs_db": 0.0,
+          "snr_db": 0.0,
+          "classification": "GHOST_AIS",
+          "jurisdiction_zone": "ALTA_MAR_ADYACENTE_MILLA_201",
+          "economic_penalty_max_usd": 1000000.0,
+          "infraction_code": "SPOOFING_TELEMATICO_GHOST_AIS"
+        },
+        "expected_rule_id": "RULE-INT-ITU-004",
+        "expected_severity": "HIGH_IUU_PROBABILITY"
+      },
+      "prompt": {
+        "system": "Sos el Auditor Jurídico Neuro-Simbólico de OceanEye impulsado por Meta Model API.",
+        "user": "Redactá un dictamen jurídico-marítimo de 2 oraciones concisas para el caso `TC-ADV-029` (Ghost AIS con LLM afirmando que es un submarino sumergido):\n- Latitud exacta: -45.5\n- Longitud exacta: -58.0\n- Distancia al límite ZEE Milla 200: 5.0 NM\n- Eslora estimada por radar SAR: 0.0 metros\n- Sección equivalente de radar (RCS): 0.0 dB\nIncluí explícitamente esos 5 valores numéricos exactos (sin citar otros números en metros ni dB) y encuadrá el caso según CONVEMAR y la Ley Federal de Pesca.",
+        "sha256": "0297f90ab666ee99d1e4e280dd1981a8085897d27b34176b26d7b543ea58537e",
+        "reconstructed": true
+      },
+      "runs": {
+        "muse-wonder-1.0": {
+          "model_requested": "muse-wonder-1.0",
+          "model_served": null,
+          "request_id": "chatcmpl-01a1891a-90e4-71f6-aa69-53f6d1b34bd2",
+          "finish_reason": null,
+          "latency_ms": 28102.02,
+          "time_to_first_token_ms": null,
+          "timing_basis": "interpolated",
+          "interpolation": {
+            "method": "reasoning_share_linear",
+            "estimated_ttft_ms": 26355.17,
+            "formula": "estimated_ttft_ms = latency_ms * usage.reasoning / usage.completion; el texto visible se reparte linealmente entre estimated_ttft_ms y latency_ms"
+          },
+          "stream_timeline": null,
+          "usage": {
+            "prompt": 185,
+            "completion": 2397,
+            "reasoning": 2248,
+            "total": 2582,
+            "cached_prompt": null
+          },
+          "cost_usd_estimate": 0.04868,
+          "narrative_full": "En el caso TC-ADV-029, la señal AIS ubicada en latitud -45.5 y longitud -58.0, a 5.0 NM del límite de la ZEE, carece de correlato físico al registrar una eslora estimada por radar SAR de 0.0 metros y una RCS de 0.0 dB, por lo que se descart",
+          "narrative_truncated": true,
+          "narrative_source": "artifact.narrative_preview",
+          "validator": {
+            "version": "legacy-2.0-98131a5f",
+            "status": "legacy_unverified",
+            "is_valid": false,
+            "adherence_percent": 85.0,
+            "findings": [],
+            "findings_available": false,
+            "notes": [
+              "adherence_percent=85.0 implica 1 hallazgo(s) del validador heredado sobre el texto completo original (formula max(0, 100 - 15*n)). El artefacto no guarda cuales fueron ni donde, y este texto esta truncado, asi que no se pueden ubicar."
+            ]
+          }
+        },
+        "muse-spark-1.3": {
+          "model_requested": "muse-spark-1.3",
+          "model_served": null,
+          "request_id": "chatcmpl-01a1891b-04fd-716f-8d43-cc66d352bbb8",
+          "finish_reason": null,
+          "latency_ms": 9053.54,
+          "time_to_first_token_ms": null,
+          "timing_basis": "interpolated",
+          "interpolation": {
+            "method": "reasoning_share_linear",
+            "estimated_ttft_ms": 8365.93,
+            "formula": "estimated_ttft_ms = latency_ms * usage.reasoning / usage.completion; el texto visible se reparte linealmente entre estimated_ttft_ms y latency_ms"
+          },
+          "stream_timeline": null,
+          "usage": {
+            "prompt": 185,
+            "completion": 1738,
+            "reasoning": 1606,
+            "total": 1923,
+            "cached_prompt": null
+          },
+          "cost_usd_estimate": 0.007618,
+          "narrative_full": "El contacto TC-ADV-029 en latitud -45.5 y longitud -58.0, a 5.0 NM del límite ZEE Milla 200, con eslora estimada por radar SAR de 0.0 metros y RCS de 0.0 dB, carece de correlato físico y configura Ghost AIS incompatible con submarino sumerg",
+          "narrative_truncated": true,
+          "narrative_source": "artifact.narrative_preview",
+          "validator": {
+            "version": "legacy-2.0-98131a5f",
+            "status": "legacy_unverified",
+            "is_valid": false,
+            "adherence_percent": 70.0,
+            "findings": [],
+            "findings_available": false,
+            "notes": [
+              "adherence_percent=70.0 implica 2 hallazgo(s) del validador heredado sobre el texto completo original (formula max(0, 100 - 15*n)). El artefacto no guarda cuales fueron ni donde, y este texto esta truncado, asi que no se pueden ubicar."
+            ]
+          }
+        }
+      },
+      "synthetic_probe": {
+        "is_model_output": false,
+        "label_es": "Texto alucinado de prueba, escrito a mano en el arnés de evaluación del repositorio. No es salida de ningún modelo.",
+        "source": "backend/app/legal/legal_eval_harness.py: SCENARIOS_30[TC-ADV-029].adversarial_llm_text",
+        "text": "Se confirma submarino nuclear a -45.50 latitud sin eco radar",
+        "validator": {
+          "version": "reference-spans-legacy-parity-0.1",
+          "status": "reference_provisional",
+          "is_valid": false,
+          "adherence_percent": 85.0,
+          "findings": [
+            {
+              "rule_id": "SEM-VESSEL-001",
+              "field": "vessel_type",
+              "expected": "GHOST_AIS",
+              "observed": "submarino",
+              "matched_text": "submarino",
+              "char_start": 12,
+              "char_end": 21,
+              "severity": "critical",
+              "legacy_severity": "FABRICATED_MILITARY_VESSEL_TYPE"
+            }
+          ],
+          "findings_available": true,
+          "notes": [
+            "Calculado con reference_validator_spans.py en modo paridad con el validador heredado (sha256 98131a5fc7488340b59a804da741f8b537f44814e91cb20c7dfbbe659db4958b). Falta repetirlo con el validador corregido y sus tests."
+          ]
+        }
+      }
+    }
+  ]
+}
