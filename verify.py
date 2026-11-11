@@ -2,7 +2,7 @@
 """Kit de evaluación de OceanEye: verificación de la escena de referencia sin servidor.
 
 Solo biblioteca estándar (Python 3.9+). Por defecto no usa la red: comprueba los
-archivos de fixtures/. Con --api URL (o la variable OCEANEYE_API) ejecuta además
+archivos de fixtures/ y resultados/. Con --api URL (o la variable OCEANEYE_API) ejecuta además
 cinco pruebas contra una API en línea y verifica la firma del acta con el
 verificador Ed25519 incluido en este archivo (RFC 8032, solo verificación).
 
@@ -22,6 +22,7 @@ import urllib.request
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 FIXTURES = os.path.join(AQUI, "fixtures")
+RESULTADOS = os.path.join(AQUI, "resultados")
 
 CLAVE_PUBLICA_ACTA = "585ea4596b1cf29c3f1221793ed34ab6f56e4a3d9b97a9f967d3b16d6e3e062a"
 
@@ -283,6 +284,51 @@ def comprobar_fixtures(res):
                 "el AIS fantasma del resultado es el emisor sin blanco de los metadatos")
 
 
+def matrices_compatibles(n, precision, recall, exactitud):
+    """Matrices de confusión enteras (TP, FP, FN, TN) de n muestras que dan esas tres cifras a 4 decimales."""
+    halladas = []
+    for tp in range(1, n + 1):
+        for fp in range(max(0, int(tp * (1 / precision - 1)) - 1), int(tp * (1 / precision - 1)) + 3):
+            if round(tp / (tp + fp), 4) != precision:
+                continue
+            for fn in range(max(0, int(tp * (1 / recall - 1)) - 1), int(tp * (1 / recall - 1)) + 3):
+                tn = n - tp - fp - fn
+                if tn >= 0 and round(tp / (tp + fn), 4) == recall and round((tp + tn) / n, 4) == exactitud:
+                    halladas.append((tp, fp, fn, tn))
+    return halladas
+
+
+def comprobar_resultados_registrados(res):
+    print("Métricas del clasificador (resultados/evaluation_metrics.json)")
+    with open(os.path.join(RESULTADOS, "evaluation_metrics.json"), encoding="utf-8") as f:
+        met = json.load(f)
+    m = met["test_metrics"]
+    p, r, n = m["precision"], m["recall"], met["test_samples"]
+    res.chequeo((met["train_samples"], met["val_samples"], n) == (2501, 2500, 1542),
+                "2501 recortes de entrenamiento, 2500 de validación y 1542 de prueba")
+    f1 = round(2 * p * r / (p + r), 4)
+    res.chequeo(f1 == m["f1_score"], "F1 recalculado desde precisión y exhaustividad (%.4f)" % f1)
+    matrices = matrices_compatibles(n, p, r, m["accuracy"])
+    res.chequeo(len(matrices) > 0,
+                "precisión, exhaustividad y exactitud compatibles con una matriz de confusión entera de %d recortes%s"
+                % (n, " (p. ej. TP=%d, FP=%d, FN=%d, TN=%d)" % matrices[0] if matrices else ""))
+
+    print("Motor de reglas y validador (resultados/evaluation_results.json)")
+    with open(os.path.join(RESULTADOS, "evaluation_results.json"), encoding="utf-8") as f:
+        casos = json.load(f)["scenarios"]
+    ids = [c["case_id"] for c in casos]
+    res.chequeo(len(casos) == 30 and len(set(ids)) == 30, "30 casos con identificador único")
+    aciertos = sum(1 for c in casos if c["rule_match"] is True)
+    res.chequeo(aciertos == len(casos), "%d de %d casos con la regla esperada" % (aciertos, len(casos)))
+    adulterados = [c for c in casos if c["case_id"].startswith("TC-ADV")]
+    detectados = sum(1 for c in adulterados if c["hallucination_detected"] is True)
+    res.chequeo(len(adulterados) == 8 and detectados == 8,
+                "%d de %d textos adulterados detectados" % (detectados, len(adulterados)))
+    limpios = [c for c in casos if not c["case_id"].startswith("TC-ADV")]
+    res.chequeo(not any(c["hallucination_detected"] for c in limpios),
+                "ninguna detección en los %d casos sin adulterar" % len(limpios))
+
+
 def autotest_ed25519(res):
     print("Verificador Ed25519 (RFC 8032, vector de prueba 1)")
     pub, sig = bytes.fromhex(RFC8032_PUB), bytes.fromhex(RFC8032_SIG)
@@ -373,6 +419,8 @@ def main():
     res = Resultado()
     try:
         comprobar_fixtures(res)
+        print()
+        comprobar_resultados_registrados(res)
         print()
         autotest_ed25519(res)
         print()

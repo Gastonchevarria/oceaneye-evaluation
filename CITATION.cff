@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+message: "Si utiliza este material, cítelo con estos datos."
+title: "OceanEye: kit de evaluación"
+type: software
+authors:
+  - family-names: "Chevarría"
+    given-names: "Gastón"
+    email: "gaston@oceaneye-ai.com"
+repository-code: "https://github.com/Gastonchevarria/oceaneye-evaluation"
+url: "https://oceaneye-ai.com"
+license: MIT

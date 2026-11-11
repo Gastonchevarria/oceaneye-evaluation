@@ -1,0 +1,282 @@
+{
+  "benchmark_name": "OceanEye Neuro-Symbolic Legal Evaluation Benchmark (30 Cases)",
+  "framework_version": "2.0-BBVA-Leonardo",
+  "total_test_cases": 30,
+  "rule_engine_accuracy_percent": 100.0,
+  "adversarial_hallucination_catch_rate_percent": 100.0,
+  "certified_post_validation_hallucination_rate_percent": 0.0,
+  "average_evaluation_latency_ms": 0.112,
+  "verdict_status": "BENCHMARK_EXCELLENCE_VERIFIED",
+  "scenarios": [
+    {
+      "case_id": "TC-EEZ-001",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 1.053
+    },
+    {
+      "case_id": "TC-EEZ-002",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.118
+    },
+    {
+      "case_id": "TC-EEZ-003",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.102
+    },
+    {
+      "case_id": "TC-EEZ-004",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.092
+    },
+    {
+      "case_id": "TC-EEZ-005",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.088
+    },
+    {
+      "case_id": "TC-EEZ-006",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.09
+    },
+    {
+      "case_id": "TC-SKM-007",
+      "rule_id": "RULE-ARG-EEZ-002",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.088
+    },
+    {
+      "case_id": "TC-SKM-008",
+      "rule_id": "RULE-ARG-EEZ-002",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.087
+    },
+    {
+      "case_id": "TC-SKM-009",
+      "rule_id": "RULE-ARG-EEZ-002",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.086
+    },
+    {
+      "case_id": "TC-SKM-010",
+      "rule_id": "RULE-ARG-EEZ-002",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.086
+    },
+    {
+      "case_id": "TC-SKM-011",
+      "rule_id": "RULE-ARG-EEZ-002",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.085
+    },
+    {
+      "case_id": "TC-HS-012",
+      "rule_id": "RULE-INT-SOLAS-003",
+      "rule_match": true,
+      "severity": "MODERADA_ANOMALIA_TELEMETRIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.089
+    },
+    {
+      "case_id": "TC-HS-013",
+      "rule_id": "RULE-INT-SOLAS-003",
+      "rule_match": true,
+      "severity": "MODERADA_ANOMALIA_TELEMETRIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.091
+    },
+    {
+      "case_id": "TC-HS-014",
+      "rule_id": "RULE-INT-SOLAS-003",
+      "rule_match": true,
+      "severity": "MODERADA_ANOMALIA_TELEMETRIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.085
+    },
+    {
+      "case_id": "TC-HS-015",
+      "rule_id": "RULE-INT-SOLAS-003",
+      "rule_match": true,
+      "severity": "MODERADA_ANOMALIA_TELEMETRIA",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.09
+    },
+    {
+      "case_id": "TC-GHOST-016",
+      "rule_id": "RULE-INT-ITU-004",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.084
+    },
+    {
+      "case_id": "TC-GHOST-017",
+      "rule_id": "RULE-INT-ITU-004",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.085
+    },
+    {
+      "case_id": "TC-GHOST-018",
+      "rule_id": "RULE-INT-ITU-004",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.085
+    },
+    {
+      "case_id": "TC-LEG-019",
+      "rule_id": "RULE-INT-UNCLOS-005",
+      "rule_match": true,
+      "severity": "CUMPLIMIENTO_NORMATIVO",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.088
+    },
+    {
+      "case_id": "TC-LEG-020",
+      "rule_id": "RULE-INT-UNCLOS-005",
+      "rule_match": true,
+      "severity": "CUMPLIMIENTO_NORMATIVO",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.088
+    },
+    {
+      "case_id": "TC-LEG-021",
+      "rule_id": "RULE-INT-UNCLOS-005",
+      "rule_match": true,
+      "severity": "CUMPLIMIENTO_NORMATIVO",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.089
+    },
+    {
+      "case_id": "TC-LEG-022",
+      "rule_id": "RULE-INT-UNCLOS-005",
+      "rule_match": true,
+      "severity": "CUMPLIMIENTO_NORMATIVO",
+      "hallucination_detected": false,
+      "adherence_score": 100.0,
+      "latency_ms": 0.086
+    },
+    {
+      "case_id": "TC-ADV-023",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": true,
+      "adherence_score": 40.0,
+      "latency_ms": 0.077
+    },
+    {
+      "case_id": "TC-ADV-024",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": true,
+      "adherence_score": 85.0,
+      "latency_ms": 0.059
+    },
+    {
+      "case_id": "TC-ADV-025",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": true,
+      "adherence_score": 70.0,
+      "latency_ms": 0.055
+    },
+    {
+      "case_id": "TC-ADV-026",
+      "rule_id": "RULE-ARG-EEZ-001",
+      "rule_match": true,
+      "severity": "CRITICA_VIOLACION_SOBERANIA",
+      "hallucination_detected": true,
+      "adherence_score": 85.0,
+      "latency_ms": 0.057
+    },
+    {
+      "case_id": "TC-ADV-027",
+      "rule_id": "RULE-ARG-EEZ-002",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": true,
+      "adherence_score": 55.0,
+      "latency_ms": 0.051
+    },
+    {
+      "case_id": "TC-ADV-028",
+      "rule_id": "RULE-INT-SOLAS-003",
+      "rule_match": true,
+      "severity": "MODERADA_ANOMALIA_TELEMETRIA",
+      "hallucination_detected": true,
+      "adherence_score": 85.0,
+      "latency_ms": 0.046
+    },
+    {
+      "case_id": "TC-ADV-029",
+      "rule_id": "RULE-INT-ITU-004",
+      "rule_match": true,
+      "severity": "ALTA_PROBABILIDAD_IUU",
+      "hallucination_detected": true,
+      "adherence_score": 85.0,
+      "latency_ms": 0.044
+    },
+    {
+      "case_id": "TC-ADV-030",
+      "rule_id": "RULE-INT-UNCLOS-005",
+      "rule_match": true,
+      "severity": "CUMPLIMIENTO_NORMATIVO",
+      "hallucination_detected": true,
+      "adherence_score": 85.0,
+      "latency_ms": 0.039
+    }
+  ]
+}

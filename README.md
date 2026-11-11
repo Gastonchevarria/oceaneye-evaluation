@@ -12,6 +12,7 @@ Este repositorio es el kit de evaluación de **OceanEye**, un proyecto de invest
 
 - Sitio: <https://oceaneye-ai.com>
 - Contacto: <gaston@oceaneye-ai.com> · <contacto@oceaneye-ai.com>
+- Memoria presentada: [`MEMORIA_LEONARDO.md`](MEMORIA_LEONARDO.md), copia literal del texto enviado a la convocatoria. Algunas direcciones que cita corresponden a la infraestructura anterior y hoy no responden; el sitio vigente es <https://oceaneye-ai.com> y el material verificable es este repositorio. La memoria llama «ResNet-18 Dual-Stream» al clasificador que aquí se describe con más precisión como CNN residual compacta inspirada en ResNet-18.
 
 ## Cómo verificar en un comando
 
@@ -50,6 +51,16 @@ Correspondencia con la verdad de terreno
   [ok]    cada confirmación AIS une un blanco con el MMSI ficticio de su verdad de terreno
   [ok]    el AIS fantasma del resultado es el emisor sin blanco de los metadatos
 
+Métricas del clasificador (resultados/evaluation_metrics.json)
+  [ok]    2501 recortes de entrenamiento, 2500 de validación y 1542 de prueba
+  [ok]    F1 recalculado desde precisión y exhaustividad (0.9663)
+  [ok]    precisión, exhaustividad y exactitud compatibles con una matriz de confusión entera de 1542 recortes (p. ej. TP=1118, FP=32, FN=46, TN=346)
+Motor de reglas y validador (resultados/evaluation_results.json)
+  [ok]    30 casos con identificador único
+  [ok]    30 de 30 casos con la regla esperada
+  [ok]    8 de 8 textos adulterados detectados
+  [ok]    ninguna detección en los 22 casos sin adulterar
+
 Verificador Ed25519 (RFC 8032, vector de prueba 1)
   [ok]    firma del vector 1 aceptada
   [ok]    firma alterada rechazada
@@ -58,7 +69,7 @@ Verificador Ed25519 (RFC 8032, vector de prueba 1)
 Acta firmada
   [info]  No hay acta firmada incluida; verificar una requiere el modo --api.
 
-20 comprobaciones correctas, 0 con falla.
+27 comprobaciones correctas, 0 con falla.
 Todas las comprobaciones pasaron.
 ```
 
@@ -66,17 +77,19 @@ El script termina con código 0 solo si todas las comprobaciones pasan; con 1 si
 
 ## Qué verifica y qué no
 
-Verifica, sobre los archivos de `fixtures/`:
+Verifica, sobre los archivos de `fixtures/` y `resultados/`:
 
 - **Conteos recalculados a partir de las listas**: 15 blancos, 3 confirmados por AIS, 12 oscuros y 1 AIS fantasma, cruzados contra `fixture_metadata.json`.
 - **Proporciones físicas**: relación eslora/manga mayor o igual que 2 en todos los blancos.
 - **Coherencia del triage**: teselas descartadas más activas igual al total, y porcentaje recalculado.
 - **Correspondencia con la verdad de terreno**: cada blanco oscuro del resultado coincide (por posición en píxeles y en coordenadas) con uno distinto de los 12 blancos sin AIS sembrados; cada confirmación AIS usa el MMSI de su blanco.
+- **Resultados registrados** (`resultados/`): tamaños de los conjuntos de entrenamiento, validación y prueba; F1 recalculado desde precisión y exhaustividad; existencia de una matriz de confusión entera de 1.542 recortes compatible con la precisión, la exhaustividad y la exactitud publicadas; y recuento de los 30 casos (30 con la regla esperada, 8 de 8 textos adulterados detectados, ninguna detección en los 22 restantes).
 - **Verificador Ed25519** (RFC 8032, implementado en Python puro, solo verificación): acepta el vector de prueba 1 de la RFC y rechaza una firma alterada.
 
 No verifica:
 
 - Que el pipeline vuelva a producir esos resultados: para eso hay que ejecutar el código del prototipo. Este kit comprueba que los archivos de resultado son coherentes entre sí.
+- Que el entrenamiento o la evaluación vuelvan a dar esas cifras: los archivos de `resultados/` son copia literal de lo que registró el prototipo. El kit comprueba su coherencia aritmética; no vuelve a entrenar ni a evaluar.
 - Rendimiento sobre escenas reales. La escena de referencia es **sintética** (generada con semilla fija, `np.random.seed(1982)`, con 15 blancos inyectados). Los 12 de 12 oscuros recuperados miden recuperación de blancos sembrados, no precisión de detección.
 - Ninguna acta firmada, salvo que exista `fixtures/sample_dossier.json`. Verificar un acta requiere el modo `--api`.
 
@@ -84,7 +97,9 @@ Los nombres, MMSI e IMO de los buques son **ficticios**; cualquier coincidencia 
 
 ## Resultados medidos y su procedencia
 
-Proceden del repositorio del prototipo (archivos `backend/ml/evaluation_metrics.json` y `backend/app/legal/evaluation_results.json`); este kit no los recalcula.
+Proceden del prototipo. Los dos archivos originales (`backend/ml/evaluation_metrics.json` y `backend/app/legal/evaluation_results.json`) están copiados sin cambios en [`resultados/`](resultados/); `verify.py` comprueba su coherencia interna, no los recalcula desde los datos.
+
+Los nombres de campo y las etiquetas internas de esos archivos (por ejemplo `verdict_status` o `certified_…`) son los que generó el prototipo y no implican ninguna certificación externa. Las cifras que sostiene el proyecto son las de esta tabla.
 
 | Resultado | Valor | Procedencia |
 | :--- | :--- | :--- |
@@ -93,7 +108,7 @@ Proceden del repositorio del prototipo (archivos `backend/ml/evaluation_metrics.
 | Exhaustividad (*recall*) | 96,05 % | `evaluation_metrics.json` |
 | F1 | 0,9663 | `evaluation_metrics.json` |
 | Exactitud | 94,94 % | `evaluation_metrics.json` |
-| Latencia de inferencia | 0,835 ms por recorte (medición por lotes) | `evaluation_metrics.json` |
+| Latencia de inferencia | 0,835 ms por recorte (medición por lotes sobre Apple Silicon, `mps`) | `evaluation_metrics.json` |
 | Tamaño del modelo | 4,7 MB (ONNX) | `oceaneye_sar_resnet.onnx` |
 | Motor de reglas | 30 de 30 casos tipificados como se esperaba | `evaluation_results.json` |
 | Validador de textos | 8 de 8 textos adulterados detectados | `evaluation_results.json` |
@@ -133,9 +148,14 @@ El servicio en línea está en migración de infraestructura. El modo `--api` qu
 - La escena de referencia es sintética; todavía no se validó el flujo sobre escenas Sentinel-1 reales del área.
 - El modelo se entrenó con LS-SSDD, no con datos del Atlántico Sur.
 - El límite de la ZEE que usa el prototipo es una línea aproximada y solo referencial, no el límite oficial.
+- La cabeza de estimación de eslora del clasificador es preliminar: su error medio absoluto en prueba es de 72,55 m (`resultados/evaluation_metrics.json`). No se presenta como resultado.
 - El despacho de alertas es una simulación: no se comunica con ninguna autoridad.
 - La clave de firma Ed25519 es de desarrollo; la custodia en HSM o KMS es trabajo futuro.
 - OceanEye aporta evidencia técnica; la calificación jurídica de los hechos corresponde a la autoridad competente.
+
+## Cómo citar
+
+Ver [`CITATION.cff`](CITATION.cff).
 
 ## Licencia
 
