@@ -1,233 +1,400 @@
 #!/usr/bin/env python3
-"""
-OceanEye — Public Verification & Forensic Evaluation Script
-Investigador Principal: Ing. Químico Gastón Chevarria (UTN FRVM, UNSAM)
+"""Kit de evaluación de OceanEye: verificación de la escena de referencia sin servidor.
 
-Zero-dependency verification tool: executes mathematical, telemetry,
-and cryptographic tests against the live OceanEye Forensic API.
+Solo biblioteca estándar (Python 3.9+). Por defecto no usa la red: comprueba los
+archivos de fixtures/. Con --api URL (o la variable OCEANEYE_API) ejecuta además
+cinco pruebas contra una API en línea y verifica la firma del acta con el
+verificador Ed25519 incluido en este archivo (RFC 8032, solo verificación).
+
+Códigos de salida: 0 todo correcto; 1 alguna comprobación falló; 2 la API no responde.
 """
 
-import sys
-import json
-import time
+import argparse
+import base64
 import hashlib
-import urllib.request
+import json
+import math
+import os
+import sys
+import time
 import urllib.error
+import urllib.request
 
-# API Base URL (default Cloud Run production backend)
-API_BASE = "https://oceaneye-backend-29923645081.us-central1.run.app"
+AQUI = os.path.dirname(os.path.abspath(__file__))
+FIXTURES = os.path.join(AQUI, "fixtures")
 
-# ANSI Colors for terminal output
-C_CYAN = "\033[96m"
-C_GREEN = "\033[92m"
-C_YELLOW = "\033[93m"
-C_RED = "\033[91m"
-C_BOLD = "\033[1m"
-C_RESET = "\033[0m"
+CLAVE_PUBLICA_ACTA = "585ea4596b1cf29c3f1221793ed34ab6f56e4a3d9b97a9f967d3b16d6e3e062a"
 
+RFC8032_PUB = "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
+RFC8032_SIG = (
+    "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555"
+    "fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b"
+)
 
-def http_get(url: str, timeout: int = 15) -> dict:
-    req = urllib.request.Request(
-        url,
-        headers={"User-Agent": "OceanEye-Evaluation-Kit/1.0", "Accept": "application/json"}
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+ESPERADO = {"blancos": 15, "confirmados": 3, "oscuros": 12, "fantasma": 1}
 
 
-def http_post(url: str, data: dict, timeout: int = 15) -> dict:
-    body = json.dumps(data).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=body,
-        headers={
-            "User-Agent": "OceanEye-Evaluation-Kit/1.0",
-            "Content-Type": "application/json",
-            "Accept": "application/json"
-        }
-    )
-    with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+# ---------------------------------------------------------------------------
+# Ed25519 (RFC 8032, sección 6, implementación de referencia; solo verificación)
+# ---------------------------------------------------------------------------
+_P = 2 ** 255 - 19
+_Q = 2 ** 252 + 27742317777372353535851937790883648493
+_D = -121665 * pow(121666, _P - 2, _P) % _P
+_I = pow(2, (_P - 1) // 4, _P)
 
 
-def print_banner():
-    print(f"{C_CYAN}{C_BOLD}")
-    print("=" * 80)
-    print("🌊  OCEANEYE — EVALUATION & SCIENTIFIC VERIFICATION KIT")
-    print("    Investigador Principal: Ing. Químico Gastón Chevarria (UTN FRVM · UNSAM)")
-    print("    Teledetección Satelital y Soberanía Marítima en la Milla 201 ZEE Argentina")
-    print("=" * 80 + f"{C_RESET}\n")
+def _recuperar_x(y, signo):
+    if y >= _P:
+        return None
+    x2 = (y * y - 1) * pow(_D * y * y + 1, _P - 2, _P) % _P
+    if x2 == 0:
+        return None if signo else 0
+    x = pow(x2, (_P + 3) // 8, _P)
+    if (x * x - x2) % _P != 0:
+        x = x * _I % _P
+    if (x * x - x2) % _P != 0:
+        return None
+    if (x & 1) != signo:
+        x = _P - x
+    return x
 
 
-def test_sar_benchmark():
-    print(f"{C_BOLD}[1/5] Verificando Pipeline SAR & Triage LAYA (GET /api/v1/sar/benchmark)...{C_RESET}")
-    t0 = time.time()
-    data = http_get(f"{API_BASE}/api/v1/sar/benchmark")
-    latency = (time.time() - t0) * 1000
-
-    metrics = data.get("metrics", {})
-    triage = data.get("laya_system1_triage", {})
-    darks = data.get("dark_vessels", [])
-    confirmed = data.get("confirmed_matches", [])
-
-    print(f"      • Latencia de respuesta API: {latency:.1f} ms")
-    print(f"      • Escena Satelital: {data.get('scene_id')}")
-    print(f"      • Blancos SAR Físicos: {metrics.get('total_sar_targets')} detectados")
-    print(f"      • Buques Cooperativos Confirmados (AIS): {metrics.get('total_confirmed_ais')}")
-    print(f"      • Pesqueros Oscuros (Dark Vessels): {metrics.get('total_dark_vessels')} / 12 esperados")
-    print(f"      • Suplantación de Identidad (Ghost AIS): {metrics.get('total_ghost_ais')} / 1 esperado")
-    print(f"      • Triage LAYA Sistema 1: {triage.get('rejection_rate_percent')}% mar vacío descartado en {triage.get('triage_latency_ms')} ms")
-
-    assert metrics.get("total_dark_vessels") == 12, "Fallo: se esperaban 12 buques oscuros"
-    assert metrics.get("total_confirmed_ais") == 3, "Fallo: se esperaban 3 confirmaciones AIS"
-    assert metrics.get("total_ghost_ais") == 1, "Fallo: se esperaba 1 suplantación Ghost AIS"
-    assert len(darks) == 12, "Fallo: conteo de lista de buques oscuros inconsistente"
-
-    # Verificar proporciones navales realistas (Eslora vs Manga)
-    for v in darks[:3]:
-        l = v.get("length_m", 0)
-        b = v.get("beam_m", 0)
-        ratio = l / b if b > 0 else 0
-        print(f"        -> {v.get('id')}: Eslora={l:.1f}m, Manga={b:.1f}m (L/B={ratio:.1f}, Rumbo={v.get('heading_deg')}°)")
-        assert ratio >= 2.0, f"Proporción naval no realista en {v.get('id')}"
-
-    print(f"{C_GREEN}      ✔ Benchmark SAR y Correlación Cinemática Verificados (100% OK){C_RESET}\n")
-    return darks[0]["id"]
+_GY = 4 * pow(5, _P - 2, _P) % _P
+_GX = _recuperar_x(_GY, 0)
+_G = (_GX, _GY, 1, _GX * _GY % _P)
+_NEUTRO = (0, 1, 1, 0)
 
 
-def test_legal_benchmark():
-    print(f"{C_BOLD}[2/5] Verificando Motor Jurídico Neuro-Simbólico (GET /api/v1/sar/legal/benchmark)...{C_RESET}")
-    data = http_get(f"{API_BASE}/api/v1/sar/legal/benchmark")
-    total_cases = data.get("total_test_cases", 0)
-    accuracy = data.get("rule_engine_accuracy_percent", 0.0)
-    hallucination = data.get("certified_post_validation_hallucination_rate_percent", 100.0)
-    adversarial_catch = data.get("adversarial_hallucination_catch_rate_percent", 0.0)
-    latency_ms = data.get("average_evaluation_latency_ms", 0.0)
-
-    print(f"      • Casos Jurídicos Evaluados: {total_cases}")
-    print(f"      • Exactitud del Motor de Reglas: {accuracy}% (Ley 24.922 & CONVEMAR)")
-    print(f"      • Detección de Ataques Adversarios: {adversarial_catch}%")
-    print(f"      • Tasa de Alucinación Post-Validación: {hallucination}%")
-    print(f"      • Latencia Media de Evaluación: {latency_ms} ms")
-
-    assert total_cases == 30, f"Se esperaban 30 casos legales, se recibieron {total_cases}"
-    assert accuracy == 100.0, "Exactitud menor al 100%"
-    assert hallucination == 0.0, "Alucinación jurídica detectada"
-    assert adversarial_catch == 100.0, "Falla en captura de adversarios"
-    print(f"{C_GREEN}      ✔ Consistencia Jurídica Verificada (0.00% Alucinación · 100% Precisión){C_RESET}\n")
+def _sumar(a, b):
+    A = (a[1] - a[0]) * (b[1] - b[0]) % _P
+    B = (a[1] + a[0]) * (b[1] + b[0]) % _P
+    C = 2 * a[3] * b[3] * _D % _P
+    D = 2 * a[2] * b[2] % _P
+    E, F, G, H = B - A, D - C, D + C, B + A
+    return (E * F % _P, G * H % _P, F * G % _P, E * H % _P)
 
 
-def test_public_key():
-    print(f"{C_BOLD}[3/5] Consultando Clave Pública Judicial Ed25519 (GET /api/v1/sar/laya/public-key)...{C_RESET}")
-    data = http_get(f"{API_BASE}/api/v1/sar/laya/public-key")
-    pub_key_hex = data.get("public_key_hex", "")
-    algo = data.get("algorithm", "")
-    authority = data.get("custody_authority", "")
-
-    print(f"      • Algoritmo Criptográfico: {algo} (RFC 8032)")
-    print(f"      • Clave Pública LAYA (Hex): {pub_key_hex}")
-    print(f"      • Autoridad de Custodia: {authority}")
-    print(f"      • Admisibilidad Legal: {data.get('legal_admissibility')}")
-
-    assert algo == "Ed25519", "Algoritmo inesperado"
-    assert len(pub_key_hex) == 64, "Longitud de clave pública Ed25519 inválida (debe ser 32 bytes / 64 hex)"
-    print(f"{C_GREEN}      ✔ Clave Pública Oficial de Custodia Verificada{C_RESET}\n")
-    return pub_key_hex
+def _multiplicar(s, punto):
+    q = _NEUTRO
+    while s > 0:
+        if s & 1:
+            q = _sumar(q, punto)
+        punto = _sumar(punto, punto)
+        s >>= 1
+    return q
 
 
-def test_dossier_and_signature(target_id: str, pub_key_hex: str):
-    print(f"{C_BOLD}[4/5] Inspeccionando Dossier Forense y Sello SHA-256 (GET /api/v1/sar/dossier/{target_id})...{C_RESET}")
-    dossier = http_get(f"{API_BASE}/api/v1/sar/dossier/{target_id}")
+def _iguales(a, b):
+    return (a[0] * b[2] - b[0] * a[2]) % _P == 0 and (a[1] * b[2] - b[1] * a[2]) % _P == 0
 
-    sha256_hash = dossier.get("chain_of_custody_hash_sha256", "")
-    dist_nm = dossier.get("distance_to_eez_nm", 0)
-    verdict = dossier.get("legal_verdict", {}).get("infraction_type", "N/A")
-    cert = dossier.get("laya_ed25519_certificate", {})
 
-    print(f"      • Dossier ID: {dossier.get('dossier_id')}")
-    print(f"      • Coordenadas WGS84: {dossier.get('wgs84_coordinates')}")
-    print(f"      • Distancia a Milla 200 ZEE: {dist_nm} NM ({dossier.get('boundary_status')})")
-    print(f"      • Dictamen Pericial: {verdict}")
-    print(f"      • Cadena de Custodia SHA-256: {sha256_hash}")
-    print(f"      • Firma Digital Ed25519: {cert.get('ed25519_signature_base64')[:32]}...")
+def _descomprimir(s):
+    if len(s) != 32:
+        return None
+    y = int.from_bytes(s, "little")
+    signo = y >> 255
+    y &= (1 << 255) - 1
+    x = _recuperar_x(y, signo)
+    if x is None:
+        return None
+    return (x, y, 1, x * y % _P)
 
-    assert len(sha256_hash) == 64, "Hash SHA-256 de longitud incorrecta"
-    assert cert.get("ed25519_signature_base64"), "Falta la firma Ed25519 en el certificado"
-    print(f"{C_GREEN}      ✔ Dossier Forense Estructurado y Sellado{C_RESET}\n")
 
-    print(f"{C_BOLD}[5/5] Verificación Criptográfica de la Firma en Servidor y Local (POST /api/v1/sar/laya/verify)...{C_RESET}")
-    t0 = time.time()
-    verify_resp = http_post(f"{API_BASE}/api/v1/sar/laya/verify", cert)
-    v_latency = (time.time() - t0) * 1000
+def ed25519_verificar(clave_publica, mensaje, firma):
+    """True si la firma Ed25519 es válida para (clave_publica, mensaje)."""
+    if len(clave_publica) != 32 or len(firma) != 64:
+        return False
+    A = _descomprimir(clave_publica)
+    R = _descomprimir(firma[:32])
+    if A is None or R is None:
+        return False
+    s = int.from_bytes(firma[32:], "little")
+    if s >= _Q:
+        return False
+    h = int.from_bytes(hashlib.sha512(firma[:32] + clave_publica + mensaje).digest(), "little") % _Q
+    izq = _multiplicar(8, _multiplicar(s, _G))
+    der = _multiplicar(8, _sumar(R, _multiplicar(h, A)))
+    return _iguales(izq, der)
 
-    print(f"      • Estado de Validación: {verify_resp.get('status')}")
-    print(f"      • Firma Asimétrica Válida: {verify_resp.get('signature_verified')}")
-    print(f"      • Integridad SHA-256 Verificada: {verify_resp.get('hash_verified')}")
-    print(f"      • Latencia de Verificación: {verify_resp.get('verification_latency_ms', round(v_latency, 2))} ms")
 
-    assert verify_resp.get("is_valid") is True, "La verificación criptográfica del servidor falló"
-    assert verify_resp.get("signature_verified") is True, "La firma digital no es matemáticamente válida"
+# ---------------------------------------------------------------------------
+# Utilidades
+# ---------------------------------------------------------------------------
+class Resultado:
+    def __init__(self):
+        self.ok = 0
+        self.fallos = []
 
-    # Verificación Local Independiente (si la biblioteca cryptography está instalada)
-    try:
-        import base64
-        from cryptography.hazmat.primitives.asymmetric import ed25519
-        from cryptography.exceptions import InvalidSignature
+    def chequeo(self, condicion, descripcion, detalle=""):
+        if condicion:
+            self.ok += 1
+            print("  [ok]    " + descripcion)
+        else:
+            self.fallos.append(descripcion)
+            print("  [FALLA] " + descripcion + (" -> " + detalle if detalle else ""))
+        return bool(condicion)
 
-        pub_bytes = bytes.fromhex(pub_key_hex)
-        pub_key = ed25519.Ed25519PublicKey.from_public_bytes(pub_bytes)
-        sig_bytes = base64.b64decode(cert.get("ed25519_signature_base64"))
 
-        # Reconstruir payload canónico
-        canonical = {
-            "dossier_id": cert.get("dossier_id"),
-            "target_id": cert.get("target_id"),
-            "scene_id": cert.get("scene_id"),
+def cargar(nombre):
+    with open(os.path.join(FIXTURES, nombre), encoding="utf-8") as f:
+        return json.load(f)
+
+
+def distancia_nm(lat1, lon1, lat2, lon2):
+    f1, f2 = math.radians(lat1), math.radians(lat2)
+    a = math.sin((f2 - f1) / 2) ** 2 + math.cos(f1) * math.cos(f2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
+    return 2 * 3440.065 * math.asin(math.sqrt(a))
+
+
+def relacion_eslora_manga(blanco):
+    eslora = blanco.get("length_m") or 0
+    manga = blanco.get("beam_m") or 0
+    return eslora / manga if manga > 0 else 0.0
+
+
+def acta_a_verificar(acta, clave_hex):
+    """Reconstruye el mensaje canónico del acta y devuelve (valida, hash_ok)."""
+    canonico = acta.get("canonical_payload")
+    if not canonico:
+        canonico = {
+            "dossier_id": acta.get("dossier_id"),
+            "target_id": acta.get("target_id"),
+            "scene_id": acta.get("scene_id"),
             "satellite_sensor": "Sentinel-1A SAR C-Band",
-            "timestamp_utc": cert.get("timestamp_utc"),
-            "lat": cert.get("wgs84_latitude"),
-            "lon": cert.get("wgs84_longitude"),
-            "distance_to_eez_nm": cert.get("distance_to_eez_nm"),
-            "boundary_status": cert.get("boundary_status"),
-            "length_meters": cert.get("length_meters"),
-            "beam_meters": cert.get("beam_meters"),
-            "peak_rcs_db": cert.get("peak_rcs_db"),
-            "legal_infraction": cert.get("legal_infraction"),
+            "timestamp_utc": acta.get("timestamp_utc"),
+            "lat": acta.get("wgs84_latitude", acta.get("lat")),
+            "lon": acta.get("wgs84_longitude", acta.get("lon")),
+            "distance_to_eez_nm": acta.get("distance_to_eez_nm"),
+            "boundary_status": acta.get("boundary_status"),
+            "length_meters": acta.get("length_meters"),
+            "beam_meters": acta.get("beam_meters"),
+            "peak_rcs_db": acta.get("peak_rcs_db"),
+            "legal_infraction": acta.get("legal_infraction"),
             "legal_framework": [
                 "Ley Federal de Pesca 24.922 (Art. 51)",
                 "CONVEMAR Art. 56 y 73",
-                "Resolucion OMI A.1106(29)"
+                "Resolucion OMI A.1106(29)",
             ],
-            "radar_chip_sha256": cert.get("radar_chip_sha256", hashlib.sha256(b"").hexdigest())
+            "radar_chip_sha256": acta.get("radar_chip_sha256", hashlib.sha256(b"").hexdigest()),
         }
-        payload_bytes = json.dumps(canonical, sort_keys=True).encode("utf-8")
-        pub_key.verify(sig_bytes, payload_bytes)
-        print(f"{C_GREEN}      ✔ Verificación Criptográfica Local Offline: 100% MATEMÁTICAMENTE VÁLIDA{C_RESET}")
-    except ImportError:
-        print(f"{C_YELLOW}      ℹ Nota: Se recomienda 'pip install cryptography' para validación local offline sin servidor.{C_RESET}")
-    except Exception as e:
-        print(f"{C_RED}      ✖ Error en verificación local: {e}{C_RESET}")
+    mensaje = json.dumps(canonico, sort_keys=True).encode("utf-8")
+    esperado = acta.get("sha256_evidence_hash") or acta.get("evidence_sha256")
+    hash_ok = (hashlib.sha256(mensaje).hexdigest() == esperado) if esperado else True
+    try:
+        firma = base64.b64decode(acta.get("ed25519_signature_base64") or acta.get("signature_base64") or "")
+        valida = ed25519_verificar(bytes.fromhex(clave_hex), mensaje, firma)
+    except ValueError:
+        valida = False
+    return valida, hash_ok
 
-    print(f"\n{C_GREEN}{C_BOLD}🎉 TODOS LOS TESTS DE EVALUACIÓN Y VERIFICACIÓN CIENTÍFICA COMPLETADOS CON ÉXITO.{C_RESET}\n")
+
+# ---------------------------------------------------------------------------
+# Comprobaciones sobre la escena de referencia
+# ---------------------------------------------------------------------------
+def comprobar_resultado(res, bench, etiqueta):
+    """Coherencia interna de un resultado de benchmark (fixture o respuesta de la API)."""
+    m = bench.get("metrics", {})
+    oscuros = bench.get("dark_vessels", [])
+    confirmados = bench.get("confirmed_matches", [])
+    fantasmas = bench.get("ghost_ais", [])
+    res.chequeo(len(oscuros) == ESPERADO["oscuros"] and m.get("total_dark_vessels") == len(oscuros),
+                "%s: 12 blancos oscuros (lista y métrica coinciden)" % etiqueta,
+                "lista=%d métrica=%s" % (len(oscuros), m.get("total_dark_vessels")))
+    res.chequeo(len(confirmados) == ESPERADO["confirmados"] and m.get("total_confirmed_ais") == len(confirmados),
+                "%s: 3 blancos confirmados por AIS (lista y métrica coinciden)" % etiqueta,
+                "lista=%d métrica=%s" % (len(confirmados), m.get("total_confirmed_ais")))
+    res.chequeo(len(fantasmas) == ESPERADO["fantasma"] and m.get("total_ghost_ais") == len(fantasmas),
+                "%s: 1 AIS fantasma (lista y métrica coinciden)" % etiqueta,
+                "lista=%d métrica=%s" % (len(fantasmas), m.get("total_ghost_ais")))
+    total = len(oscuros) + len(confirmados)
+    res.chequeo(total == ESPERADO["blancos"] and m.get("total_sar_targets") == total,
+                "%s: 15 blancos = oscuros + confirmados" % etiqueta,
+                "suma=%d métrica=%s" % (total, m.get("total_sar_targets")))
+    pct = round(100.0 * len(oscuros) / total, 1) if total else None
+    res.chequeo(pct is not None and m.get("dark_vessel_percentage") == pct,
+                "%s: porcentaje de oscuros recalculado (%s %%)" % (etiqueta, pct),
+                "informado=%s" % m.get("dark_vessel_percentage"))
+    blancos = list(oscuros) + [c.get("sar_target", {}) for c in confirmados]
+    malos = [b.get("id") for b in blancos if relacion_eslora_manga(b) < 2.0]
+    res.chequeo(not malos, "%s: eslora/manga >= 2 en los %d blancos" % (etiqueta, len(blancos)),
+                "incumplen: %s" % malos)
+    t = bench.get("laya_system1_triage", {})
+    descartadas, activas, tot = t.get("discarded_empty_tiles"), t.get("active_tiles"), t.get("total_tiles")
+    res.chequeo(None not in (descartadas, activas, tot) and descartadas + activas == tot,
+                "%s: triage, descartadas + activas = total" % etiqueta,
+                "%s + %s != %s" % (descartadas, activas, tot))
+    if tot:
+        pct_t = round(100.0 * descartadas / tot, 1)
+        res.chequeo(t.get("rejection_rate_percent") == pct_t,
+                    "%s: triage, porcentaje recalculado (%s %%)" % (etiqueta, pct_t),
+                    "informado=%s" % t.get("rejection_rate_percent"))
+
+
+def comprobar_fixtures(res):
+    meta = cargar("fixture_metadata.json")
+    bench = cargar("sample_benchmark.json")
+    gt = meta["ground_truth_targets"]
+    con_ais = [g for g in gt if g.get("has_active_ais")]
+    sin_ais = [g for g in gt if not g.get("has_active_ais")]
+    mmsi_gt = set(g["mmsi"] for g in con_ais)
+    fantasmas = [r for r in meta.get("ais_reports", [])
+                 if not any(distancia_nm(r["lat"], r["lon"], g["lat"], g["lon"]) < 1.0 for g in gt)]
+
+    print("Verdad de terreno (fixture_metadata.json)")
+    res.chequeo(len(gt) == meta.get("total_ground_truth_targets") == ESPERADO["blancos"],
+                "15 blancos recalculados de la lista, igual al total declarado")
+    res.chequeo(len(con_ais) == meta.get("expected_ais_confirmed") == ESPERADO["confirmados"],
+                "3 blancos con AIS activo, igual a lo declarado")
+    res.chequeo(len(sin_ais) == meta.get("expected_dark_vessels") == ESPERADO["oscuros"],
+                "12 blancos sin AIS, igual a lo declarado")
+    res.chequeo(len(fantasmas) == meta.get("expected_ghost_ais") == ESPERADO["fantasma"],
+                "1 emisor AIS sin blanco a menos de 1 NM, igual a lo declarado")
+    res.chequeo(all(relacion_eslora_manga(g) >= 2.0 for g in gt),
+                "eslora/manga >= 2 en los 15 blancos de la verdad de terreno")
+
+    print("Resultado de la escena (sample_benchmark.json)")
+    res.chequeo(bench.get("scene_id") == meta.get("scene_id"), "misma escena en resultado y metadatos")
+    comprobar_resultado(res, bench, "resultado")
+
+    print("Correspondencia con la verdad de terreno")
+    libres = list(sin_ais)
+    sin_par = []
+    for v in bench["dark_vessels"]:
+        mejor = min(libres, key=lambda g: math.hypot(g["pixel_r"] - v["pixel_r"], g["pixel_c"] - v["pixel_c"]),
+                    default=None)
+        if mejor is not None and math.hypot(mejor["pixel_r"] - v["pixel_r"], mejor["pixel_c"] - v["pixel_c"]) <= 2.0 \
+                and distancia_nm(v["lat"], v["lon"], mejor["lat"], mejor["lon"]) <= 0.5:
+            libres.remove(mejor)
+        else:
+            sin_par.append(v["id"])
+    res.chequeo(not sin_par and not libres,
+                "cada blanco oscuro del resultado corresponde a uno distinto de la verdad de terreno sin AIS "
+                "(12 de 12, tolerancia 2 px y 0,5 NM)",
+                "sin par: %s; sin recuperar: %s" % (sin_par, [g["target_id"] for g in libres]))
+    ok_conf = True
+    for c in bench["confirmed_matches"]:
+        s, a = c["sar_target"], c["ais_vessel"]
+        par = [g for g in con_ais if g["mmsi"] == a.get("mmsi")]
+        ok_conf = ok_conf and len(par) == 1 and a["mmsi"] in mmsi_gt \
+            and math.hypot(par[0]["pixel_r"] - s["pixel_r"], par[0]["pixel_c"] - s["pixel_c"]) <= 2.0
+    res.chequeo(ok_conf, "cada confirmación AIS une un blanco con el MMSI ficticio de su verdad de terreno")
+    ghost = [g.get("mmsi") for g in bench["ghost_ais"]]
+    res.chequeo(ghost == [f["mmsi"] for f in fantasmas],
+                "el AIS fantasma del resultado es el emisor sin blanco de los metadatos")
+
+
+def autotest_ed25519(res):
+    print("Verificador Ed25519 (RFC 8032, vector de prueba 1)")
+    pub, sig = bytes.fromhex(RFC8032_PUB), bytes.fromhex(RFC8032_SIG)
+    res.chequeo(ed25519_verificar(pub, b"", sig), "firma del vector 1 aceptada")
+    alterada = bytearray(sig)
+    alterada[10] ^= 0x01
+    res.chequeo(not ed25519_verificar(pub, b"", bytes(alterada)), "firma alterada rechazada")
+    res.chequeo(not ed25519_verificar(pub, b"x", sig), "mensaje alterado rechazado")
+
+
+def comprobar_acta_incluida(res):
+    ruta = os.path.join(FIXTURES, "sample_dossier.json")
+    print("Acta firmada")
+    if not os.path.exists(ruta):
+        print("  [info]  No hay acta firmada incluida; verificar una requiere el modo --api.")
+        return
+    with open(ruta, encoding="utf-8") as f:
+        doc = json.load(f)
+    acta = doc.get("laya_ed25519_certificate", doc)
+    valida, hash_ok = acta_a_verificar(acta, CLAVE_PUBLICA_ACTA)
+    res.chequeo(valida and hash_ok, "firma Ed25519 y hash SHA-256 del acta incluida válidos con la clave publicada")
+
+
+# ---------------------------------------------------------------------------
+# Modo en línea
+# ---------------------------------------------------------------------------
+def http(url, datos=None, timeout=20):
+    cuerpo = json.dumps(datos).encode("utf-8") if datos is not None else None
+    cab = {"User-Agent": "OceanEye-Evaluation-Kit/2.0", "Accept": "application/json"}
+    if cuerpo is not None:
+        cab["Content-Type"] = "application/json"
+    with urllib.request.urlopen(urllib.request.Request(url, data=cuerpo, headers=cab), timeout=timeout) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+
+def modo_api(res, base):
+    base = base.rstrip("/")
+    print("Modo en línea: %s" % base)
+    t0 = time.time()
+    print("[1/5] GET /api/v1/sar/benchmark")
+    bench = http(base + "/api/v1/sar/benchmark")
+    print("      respuesta en %.0f ms; escena %s" % ((time.time() - t0) * 1000, bench.get("scene_id")))
+    comprobar_resultado(res, bench, "API")
+    objetivo = bench["dark_vessels"][0]["id"] if bench.get("dark_vessels") else None
+
+    print("[2/5] GET /api/v1/sar/legal/benchmark")
+    legal = http(base + "/api/v1/sar/legal/benchmark")
+    res.chequeo(legal.get("total_test_cases") == 30, "30 casos jurídicos", "recibidos=%s" % legal.get("total_test_cases"))
+    res.chequeo(legal.get("rule_engine_accuracy_percent") == 100.0, "30 de 30 casos tipificados como se esperaba")
+    res.chequeo(legal.get("adversarial_hallucination_catch_rate_percent") == 100.0,
+                "textos adulterados detectados en el 100 % del conjunto")
+
+    print("[3/5] GET /api/v1/sar/laya/public-key")
+    clave = http(base + "/api/v1/sar/laya/public-key")
+    clave_hex = clave.get("public_key_hex", "")
+    res.chequeo(clave.get("algorithm") == "Ed25519" and len(clave_hex) == 64, "clave pública Ed25519 de 32 bytes")
+    print("      clave publicada por la API: %s" % clave_hex)
+    print("      clave de desarrollo; no hay custodia en HSM o KMS todavía.")
+
+    if not objetivo:
+        res.chequeo(False, "hay un blanco oscuro para pedir su acta")
+        return
+    print("[4/5] GET /api/v1/sar/dossier/%s" % objetivo)
+    acta = http(base + "/api/v1/sar/dossier/" + objetivo)
+    cert = acta.get("laya_ed25519_certificate", {})
+    res.chequeo(len(acta.get("chain_of_custody_hash_sha256", "")) == 64, "hash SHA-256 del acta de 64 caracteres hexadecimales")
+    res.chequeo(bool(cert.get("ed25519_signature_base64")), "el acta incluye firma Ed25519")
+
+    print("[5/5] POST /api/v1/sar/laya/verify y verificación local")
+    srv = http(base + "/api/v1/sar/laya/verify", cert)
+    res.chequeo(srv.get("is_valid") is True, "el servidor declara válida la firma")
+    valida, hash_ok = acta_a_verificar(cert, clave_hex)
+    res.chequeo(valida, "firma verificada localmente con el verificador Ed25519 incluido en este archivo")
+    res.chequeo(hash_ok, "hash SHA-256 del mensaje canónico recalculado localmente")
 
 
 def main():
-    print_banner()
+    ap = argparse.ArgumentParser(description="Verificación de la escena de referencia de OceanEye.")
+    ap.add_argument("--api", default=os.environ.get("OCEANEYE_API"),
+                    help="URL base de una API de OceanEye (opcional; también OCEANEYE_API)")
+    args = ap.parse_args()
+
+    print("OceanEye - kit de evaluación")
+    print("La escena de referencia es SINTÉTICA (semilla fija 1982, 15 blancos inyectados);")
+    print("los nombres, MMSI e IMO de los buques son ficticios. Verifica coherencia del flujo,")
+    print("no la precisión de detección sobre escenas reales.\n")
+
+    res = Resultado()
     try:
-        target_id = test_sar_benchmark()
-        test_legal_benchmark()
-        pub_key = test_public_key()
-        test_dossier_and_signature(target_id, pub_key)
-    except AssertionError as e:
-        print(f"\n{C_RED}{C_BOLD}❌ FALLA DE VERIFICACIÓN: {e}{C_RESET}")
-        sys.exit(1)
-    except urllib.error.URLError as e:
-        print(f"\n{C_RED}{C_BOLD}❌ ERROR DE CONEXIÓN CON EL BACKEND: {e}{C_RESET}")
-        sys.exit(2)
-    except Exception as e:
-        print(f"\n{C_RED}{C_BOLD}❌ ERROR INESPERADO: {e}{C_RESET}")
-        sys.exit(3)
+        comprobar_fixtures(res)
+        print()
+        autotest_ed25519(res)
+        print()
+        comprobar_acta_incluida(res)
+        if args.api:
+            print()
+            modo_api(res, args.api)
+    except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+        print("\nNo se pudo contactar con la API (%s): %s" % (args.api, e))
+        print("El servicio en línea puede estar en migración. Sin --api el kit funciona sin red.")
+        return 2
+    except (OSError, ValueError, KeyError) as e:
+        print("\nError al leer los datos: %s: %s" % (type(e).__name__, e))
+        return 1
+
+    print("\n%d comprobaciones correctas, %d con falla." % (res.ok, len(res.fallos)))
+    if res.fallos:
+        print("Fallas: " + "; ".join(res.fallos))
+        return 1
+    print("Todas las comprobaciones pasaron.")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

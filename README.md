@@ -1,192 +1,142 @@
-# OceanEye — Evaluation & Scientific Verification Kit 🛰️🌊
+# OceanEye: kit de evaluación 🛰️
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python: 3.9+](https://img.shields.io/badge/Python-3.9+-3776AB.svg?logo=python&logoColor=white)](https://python.org)
-[![Ed25519: RFC 8032](https://img.shields.io/badge/Cryptography-Ed25519%20RFC%208032-10B981.svg)]()
-[![ESA Copernicus: Sentinel-1 C-Band](https://img.shields.io/badge/Sensor-Sentinel--1%20SAR%20C--Band-0284C7.svg)]()
-[![Status: Reproducible Benchmark](https://img.shields.io/badge/Benchmark-100%25%20Reproducible-success.svg)]()
+[![Licencia: MIT](https://img.shields.io/badge/licencia-MIT-blue.svg)](LICENSE)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9%2B-3776AB.svg)](https://www.python.org)
+[![Sin dependencias](https://img.shields.io/badge/dependencias-ninguna-success.svg)](verify.py)
 
-> **Iniciativa de Investigación Científica, Teledetección y Soberanía Tecnológica del Mar Argentino**  
-> *Detección de Pesca Ilegal No Declarada y No Reglamentada (INDNR) en la Milla 201 ZEE y Agujero Azul mediante Radar Orbital Sentinel-1 SAR, Triage Determinista LAYA y Cadena de Custodia Criptográfica.*
+Detección de pesca ilegal en el Atlántico Sudoccidental con radar satelital (Sentinel-1) e inteligencia artificial verificable.
 
----
+## Qué es
 
-## 👨‍🔬 Dirección Científica y Autoría
+Este repositorio es el kit de evaluación de **OceanEye**, un proyecto de investigación de **Gastón Chevarría**, presentado a las Becas Leonardo a Investigadores y Creadores Culturales 2026 (Fundación BBVA). Permite comprobar en pocos minutos, sin servidor ni credenciales, la coherencia de los resultados que cita la memoria.
 
-- **Investigador Principal:** **Ing. Químico Gastón Chevarria**
-- **Filiación Académica / Institucional:** Investigador Independiente · Especialista en Arquitectura de Sistemas de Inteligencia Artificial.  
-  Formación de grado y posgrado: **Universidad Tecnológica Nacional (UTN FRVM)** · **Universidad Nacional de San Martín (UNSAM)**.
-- **Canales Oficiales de Contacto:**
-  - Investigador Principal: [`gaston@oceaneye-ai.com`](mailto:gaston@oceaneye-ai.com)
-  - Despacho Institucional: [`contacto@oceaneye-ai.com`](mailto:contacto@oceaneye-ai.com)
-- **Antecedente de Teledetección y Machine Learning Ambiental:**  
-  *«Clasificación y Monitoreo de Parámetros de Calidad de Agua en la Franja Costera del Río de la Plata mediante Modelos de Machine Learning»* (desarrollado en colaboración con series de datos abiertos del Ministerio de Ambiente y Desarrollo Sostenible de la Nación).
+- Sitio: <https://oceaneye-ai.com>
+- Contacto: <gaston@oceaneye-ai.com> · <contacto@oceaneye-ai.com>
 
----
+## Cómo verificar en un comando
 
-## 🧭 Propósito de este Repositorio
-
-Este repositorio constituye el **Evaluation & Verification Kit** público e independiente de la plataforma **OceanEye**. Permite a evaluadores académicos, tribunales internacionales y jurados de convocatorias científicas (como la *Beca Leonardo BBVA 2026 en Ciencias de la Computación*) reproducir, auditar y validar matemáticamente:
-
-1. El funcionamiento de la **escena de referencia sintética calibrada** del Corredor Milla 201 (Atlántico Sudoccidental).
-2. El rendimiento del **Triage Determinista LAYA (Sistema 1)** en micro-latencia.
-3. Las métricas de detección y discriminación entre buques cooperativos (AIS) y **buques oscuros (Dark Vessels)**.
-4. La detección del fraude geoespacial (**Ghost AIS Spoofing**).
-5. La **autenticidad matemática inmutable** de las actas periciales mediante firma digital asimétrica **Ed25519** y digest **SHA-256**.
-
-> 🔒 **Nota sobre Propiedad Intelectual:** Este kit contiene las especificaciones matemáticas, fixtures de prueba y el script de verificación. El backend privado de producción (modelos convolucionales propietarios, ingestores directos de ESA Copernicus y orquestadores Cloud Run) se mantiene reservado.
-
----
-
-## ⚡ Ejecución Rápida de Verificación (1 Solo Comando)
-
-El script `verify.py` no requiere ninguna dependencia externa (`pip` no es necesario; utiliza exclusivamente la biblioteca estándar de Python 3):
+Requiere solo Python 3.9 o superior. No usa la red ni instala nada.
 
 ```bash
 python3 verify.py
 ```
 
-### Salida esperada en consola:
+Salida real de la última ejecución (código de salida 0):
 
 ```text
-================================================================================
-🌊  OCEANEYE — EVALUATION & SCIENTIFIC VERIFICATION KIT
-    Investigador Principal: Ing. Químico Gastón Chevarria (UTN FRVM · UNSAM)
-    Teledetección Satelital y Soberanía Marítima en la Milla 201 ZEE Argentina
-================================================================================
+OceanEye - kit de evaluación
+La escena de referencia es SINTÉTICA (semilla fija 1982, 15 blancos inyectados);
+los nombres, MMSI e IMO de los buques son ficticios. Verifica coherencia del flujo,
+no la precisión de detección sobre escenas reales.
 
-[1/5] Verificando Pipeline SAR & Triage LAYA (GET /api/v1/sar/benchmark)...
-      • Latencia de respuesta API: ~35 ms
-      • Escena Satelital: S1A_IW_GRDH_1SDV_20260415T140230_MILE201_ARGENTINA
-      • Blancos SAR Físicos: 15 detectados
-      • Buques Cooperativos Confirmados (AIS): 3
-      • Pesqueros Oscuros (Dark Vessels): 12 / 12 esperados
-      • Suplantación de Identidad (Ghost AIS): 1 / 1 esperado
-      • Triage LAYA Sistema 1: 44.0% mar vacío descartado en 3.12 ms
-        -> SAR-TGT-001: Eslora=80.0m, Manga=5.0m (L/B=16.0, Rumbo=180.0°)
-      ✔ Benchmark SAR y Correlación Cinemática Verificados (100% OK)
+Verdad de terreno (fixture_metadata.json)
+  [ok]    15 blancos recalculados de la lista, igual al total declarado
+  [ok]    3 blancos con AIS activo, igual a lo declarado
+  [ok]    12 blancos sin AIS, igual a lo declarado
+  [ok]    1 emisor AIS sin blanco a menos de 1 NM, igual a lo declarado
+  [ok]    eslora/manga >= 2 en los 15 blancos de la verdad de terreno
+Resultado de la escena (sample_benchmark.json)
+  [ok]    misma escena en resultado y metadatos
+  [ok]    resultado: 12 blancos oscuros (lista y métrica coinciden)
+  [ok]    resultado: 3 blancos confirmados por AIS (lista y métrica coinciden)
+  [ok]    resultado: 1 AIS fantasma (lista y métrica coinciden)
+  [ok]    resultado: 15 blancos = oscuros + confirmados
+  [ok]    resultado: porcentaje de oscuros recalculado (80.0 %)
+  [ok]    resultado: eslora/manga >= 2 en los 15 blancos
+  [ok]    resultado: triage, descartadas + activas = total
+  [ok]    resultado: triage, porcentaje recalculado (52.0 %)
+Correspondencia con la verdad de terreno
+  [ok]    cada blanco oscuro del resultado corresponde a uno distinto de la verdad de terreno sin AIS (12 de 12, tolerancia 2 px y 0,5 NM)
+  [ok]    cada confirmación AIS une un blanco con el MMSI ficticio de su verdad de terreno
+  [ok]    el AIS fantasma del resultado es el emisor sin blanco de los metadatos
 
-[2/5] Verificando Motor Jurídico Neuro-Simbólico (GET /api/v1/sar/legal/benchmark)...
-      • Casos Jurídicos Evaluados: 30
-      • Exactitud Normativa: 100.0% (Ley 24.922 & CONVEMAR)
-      • Tasa de Alucinación: 0.00%
-      ✔ Consistencia Jurídica Verificada (0.00% Alucinación)
+Verificador Ed25519 (RFC 8032, vector de prueba 1)
+  [ok]    firma del vector 1 aceptada
+  [ok]    firma alterada rechazada
+  [ok]    mensaje alterado rechazado
 
-[3/5] Consultando Clave Pública Judicial Ed25519 (GET /api/v1/sar/laya/public-key)...
-      • Algoritmo Criptográfico: Ed25519 (RFC 8032)
-      • Clave Pública LAYA: 585ea4596b1cf29c3f1221793ed34ab6f56e4a3d9b97a9f967d3b16d6e3e062a
-      ✔ Clave Pública Oficial de Custodia Verificada
+Acta firmada
+  [info]  No hay acta firmada incluida; verificar una requiere el modo --api.
 
-[4/5] Inspeccionando Dossier Forense y Sello SHA-256 (GET /api/v1/sar/dossier/SAR-TGT-001)...
-      • Dictamen Pericial: UNAUTHORIZED_IUU_FISHING_INSIDE_ARGENTINE_EEZ
-      • Cadena de Custodia SHA-256: 64 hex caracteres válidos
-      • Firma Digital Ed25519: RFC 8032 Asymmetric Signature Present
-      ✔ Dossier Forense Estructurado y Sellado
-
-[5/5] Verificación Criptográfica de la Firma en Servidor y Local (POST /api/v1/sar/laya/verify)...
-      • Estado de Validación: VALID_AUTHENTIC
-      • Firma Asimétrica Válida: True
-      • Integridad SHA-256 Verificada: True
-      ✔ Verificación Criptográfica Local Offline: 100% MATEMÁTICAMENTE VÁLIDA
-
-🎉 TODOS LOS TESTS DE EVALUACIÓN Y VERIFICACIÓN CIENTÍFICA COMPLETADOS CON ÉXITO.
+20 comprobaciones correctas, 0 con falla.
+Todas las comprobaciones pasaron.
 ```
 
----
+El script termina con código 0 solo si todas las comprobaciones pasan; con 1 si alguna falla y con 2 si, en modo `--api`, el servicio no responde.
 
-## 📐 Fundamentos Teóricos y Modelos Matemáticos
+## Qué verifica y qué no
 
-### 1. Calibración Radiométrica Satelital
-La transformación de números digitales brutos ($DN$) a coeficiente de retrodispersión normalizado ($\sigma^0$) en escala lineal sigue la calibración de la Agencia Espacial Europea (ESA):
+Verifica, sobre los archivos de `fixtures/`:
 
-$$\sigma^0 = \frac{DN^2}{A_{DN}^2}$$
+- **Conteos recalculados a partir de las listas**: 15 blancos, 3 confirmados por AIS, 12 oscuros y 1 AIS fantasma, cruzados contra `fixture_metadata.json`.
+- **Proporciones físicas**: relación eslora/manga mayor o igual que 2 en todos los blancos.
+- **Coherencia del triage**: teselas descartadas más activas igual al total, y porcentaje recalculado.
+- **Correspondencia con la verdad de terreno**: cada blanco oscuro del resultado coincide (por posición en píxeles y en coordenadas) con uno distinto de los 12 blancos sin AIS sembrados; cada confirmación AIS usa el MMSI de su blanco.
+- **Verificador Ed25519** (RFC 8032, implementado en Python puro, solo verificación): acepta el vector de prueba 1 de la RFC y rechaza una firma alterada.
 
-donde $A_{DN}$ es la tabla de calibración radiométrica dependiente del ángulo de incidencia $\theta_{inc}$.
+No verifica:
 
-### 2. Fusión Polarimétrica Dual-Pol
-Para maximizar la relación señal a ruido (SNR) frente a la rugosidad superficial marina (dispersión de Bragg provocada por olas oceánicas), se aplica una ponderación física informada entre los canales de polarización cruzada ($VH$) y copolarizada ($VV$):
+- Que el pipeline vuelva a producir esos resultados: para eso hay que ejecutar el código del prototipo. Este kit comprueba que los archivos de resultado son coherentes entre sí.
+- Rendimiento sobre escenas reales. La escena de referencia es **sintética** (generada con semilla fija, `np.random.seed(1982)`, con 15 blancos inyectados). Los 12 de 12 oscuros recuperados miden recuperación de blancos sembrados, no precisión de detección.
+- Ninguna acta firmada, salvo que exista `fixtures/sample_dossier.json`. Verificar un acta requiere el modo `--api`.
 
-$$I_{\text{fused}} = (1 - \alpha) \cdot \sigma^0_{VV} + \alpha \cdot \sigma^0_{VH}, \quad \text{con } \alpha = 0.75$$
+Los nombres, MMSI e IMO de los buques son **ficticios**; cualquier coincidencia con embarcaciones o empresas reales es casual.
 
-El canal $VH$ es altamente insensible a la rugosidad del mar pero exhibe un fortísimo rebote diedro y volumen en superestructuras de acero naval, reduciendo falsas alarmas por tormentas en más de un 80%.
+## Resultados medidos y su procedencia
 
-### 3. Filtro Adaptativo Lee Vectorizado (Despeckle)
-La reducción del ruido multiplicativo de moteado (*speckle*) se computa en tiempo $O(1)$ mediante filtrado espacial adaptativo sobre ventana local $7 \times 7$ con número equivalente de vistas $ENL = 4.4$:
+Proceden del repositorio del prototipo (archivos `backend/ml/evaluation_metrics.json` y `backend/app/legal/evaluation_results.json`); este kit no los recalcula.
 
-$$\hat{I} = \bar{I} + W \cdot (I - \bar{I})$$
+| Resultado | Valor | Procedencia |
+| :--- | :--- | :--- |
+| Conjunto de datos | LS-SSDD (Sentinel-1, VV + VH): 2.501 recortes de entrenamiento, 2.500 de validación, 1.542 de prueba | `evaluation_metrics.json` |
+| Precisión (prueba) | 97,22 % | `evaluation_metrics.json` |
+| Exhaustividad (*recall*) | 96,05 % | `evaluation_metrics.json` |
+| F1 | 0,9663 | `evaluation_metrics.json` |
+| Exactitud | 94,94 % | `evaluation_metrics.json` |
+| Latencia de inferencia | 0,835 ms por recorte (medición por lotes) | `evaluation_metrics.json` |
+| Tamaño del modelo | 4,7 MB (ONNX) | `oceaneye_sar_resnet.onnx` |
+| Motor de reglas | 30 de 30 casos tipificados como se esperaba | `evaluation_results.json` |
+| Validador de textos | 8 de 8 textos adulterados detectados | `evaluation_results.json` |
 
-$$W = \max\left(0, 1 - \frac{C_v^2}{C_i^2}\right), \quad C_v = \frac{1}{\sqrt{ENL}}, \quad C_i = \frac{s}{\bar{I}}$$
+El conjunto de 30 casos fue escrito por el propio proyecto; su ampliación está prevista en el plan de trabajo. La escena de referencia (`fixtures/`) se describe arriba: es sintética.
 
-donde $\bar{I}$ es la media local del fondo, $s$ es la desviación típica y $W$ es el factor de ponderación que preserva bordes duros de buques.
+## Fundamentos
 
-### 4. Detector 2D CA-CFAR con Anti-Enmascaramiento de Flota
-El umbral de decisión adaptativo garantiza una probabilidad constante de falsa alarma ($P_{fa} = 10^{-5}$):
+Descripción resumida de las etapas del prototipo.
 
-$$T = \alpha_{\text{cfar}} \cdot P_{\text{clutter}}$$
+1. **Calibración radiométrica.** $\sigma^0 = DN^2 / A_{DN}^2$, con $A_{DN}$ la tabla de calibración del producto Sentinel-1 GRD.
+2. **Fusión de polarizaciones.** $I = \alpha\,\sigma^0_{VH} + (1-\alpha)\,\sigma^0_{VV}/\kappa$, con $\alpha = 0{,}75$ y $\kappa$ la razón de medianas VV/VH del fondo marino. La polarización cruzada suele ser menos sensible al oleaje y más sensible a las superestructuras metálicas; el peso es un parámetro del prototipo, no un resultado optimizado.
+3. **Filtro de Lee** (ventana de 7 × 7, $ENL = 4{,}4$): $\hat I = \bar I + W\,(I-\bar I)$, con $W = \max(0,\,1 - C_v^2/C_i^2)$, $C_v = 1/\sqrt{ENL}$ y $C_i = s/\bar I$.
+4. **CA-CFAR bidimensional.** Umbral $T = \alpha_{cfar}\,P_{clutter}$ con $\alpha_{cfar} = N\,(P_{fa}^{-1/N}-1)$; el código usa $P_{fa} = 10^{-6}$ por defecto. Para limitar el enmascaramiento entre buques vecinos, se excluyen del fondo los valores atípicos muy altos.
+5. **Dimensiones del blanco.** Eslora, manga y rumbo a partir de los momentos centrales de segundo orden de cada componente conexa.
+6. **Clasificador.** `OceanEyeSarNet`, CNN residual compacta de doble polarización, inspirada en ResNet-18, sobre recortes de 64 × 64 píxeles (canales VV y VH). Solo la cabeza de embarcación frente a *clutter* está evaluada; las cabezas de arte de pesca y de eslora son preliminares y sus salidas no se presentan como resultado.
+7. **Correlación con AIS.** Cada reporte AIS se proyecta al instante de la captura, $\vec x(t_{sar}) = \vec x(t_{ais}) + \vec v\,(t_{sar}-t_{ais})$, y se asigna a los blancos con el algoritmo húngaro (distancia ortodrómica, compuerta de 3,0 NM). Un blanco sin AIS se marca como oscuro; un emisor AIS sin eco de radar, como señal fantasma.
+8. **Sellado.** Cada informe se serializa como JSON canónico (claves ordenadas), se resume con SHA-256 y se firma con Ed25519 (RFC 8032). La firma se verifica con la clave pública y sin acceso a la clave privada. La clave del prototipo es de desarrollo.
 
-$$\alpha_{\text{cfar}} = N \cdot \left( P_{fa}^{-1/N} - 1 \right)$$
+Normas a las que hace referencia el motor de reglas: Ley 24.922 (arts. 3, 21, 22 y 51), Ley 27.564, CONVEMAR (arts. 17, 56.1.a, 63.2, 73 y 87), Código Penal (art. 292), Resolución OMI A.1106(29) y Reglamento de Radiocomunicaciones de la UIT (art. 19). El motor señala qué norma resulta pertinente según reglas explícitas; no sustituye el análisis de un profesional del derecho ni la decisión de la autoridad competente.
 
-donde $N$ es el número de celdas de entrenamiento perimetrales (excluyendo el anillo de guardia). El mecanismo de *anti-enmascaramiento* recorta estadísticos superiores al percentil 75 en las celdas de entrenamiento, impidiendo que la proximidad de buques vecinos (agrupaciones densas de poteros) ciegue la detección.
+## Modo en línea (opcional)
 
-### 5. Tensor de Inercia y Dimensiones Morfológicas
-Para cada blanco discretizado por componentes conexas, la eslora, manga y rumbo se derivan de los momentos centrales espaciales de segundo orden ($\mu_{20}, \mu_{02}, \mu_{11}$):
+```bash
+python3 verify.py --api https://<url-de-la-api>
+# o bien: OCEANEYE_API=https://<url-de-la-api> python3 verify.py
+```
 
-$$\mathbf{J} = \begin{bmatrix} \mu_{20} & \mu_{11} \\ \mu_{11} & \mu_{02} \end{bmatrix}, \quad \det(\mathbf{J} - \lambda \mathbf{I}) = 0$$
+Además de las comprobaciones locales, ejecuta cinco pruebas contra la API (benchmark de la escena, benchmark legal, clave pública, acta de un blanco y verificación de su firma) y verifica la firma del acta de forma local con el verificador incluido en `verify.py`. Si la API no responde, informa el error y termina con código 2.
 
-$$\text{Eslora} = 4 \sqrt{\lambda_{\text{major}}} \cdot \Delta x_{\text{res}}, \quad \text{Manga} = 4 \sqrt{\lambda_{\text{minor}}} \cdot \Delta y_{\text{res}}$$
+## Estado de la API
 
-$$\theta_{\text{rumbo}} = \frac{1}{2} \operatorname{atan2}\left(2\mu_{11}, \mu_{20} - \mu_{02}\right)$$
+El servicio en línea está en migración de infraestructura. El modo `--api` queda disponible para cuando se publique la nueva dirección. Mientras tanto, todo lo anterior funciona sin red.
 
-### 6. Clasificación de Casco Profunda con ResNet-18 Dual-Stream (ONNX)
-Para suprimir falsas alarmas generadas por picos de oleaje patagónico (*sea clutter*), los recortes de $64 \times 64$ píxeles centrados en cada detección se evalúan mediante una red neuronal convolucional **ResNet-18 Dual-Stream con Cross-Polarization Attention**, exportada a **ONNX Runtime**:
+## Límites y estado actual
 
-* **Entrada Bicanal:** Canales normalizados $\sigma^0_{\text{VV}}$ y $\sigma^0_{\text{VH}}$ en decibelios.
-* **Dataset de Entrenamiento:** **LS-SSDD** (*Large-Scale SAR Ship Detection Dataset*), con 4.466 escenas satelitales Sentinel-1 C-Band (1.542 muestras de prueba independientes).
-* **Métricas de Evaluación en Test Set:**
-  - **Precisión (*Precision*):** **97.22%**
-  - **Exhaustividad (*Recall*):** **96.05%**
-  - **F1-Score:** **96.63%**
-  - **Exactitud (*Accuracy*):** **94.94%**
-  - **Latencia de Inferencia en CPU (Cloud Run):** **14.2 ms** por blanco ($0.00 en reposo).
-* **Función de Pérdida Multitarea:**
-  $$\mathcal{L}_{\text{total}} = \mathcal{L}_{\text{BCE}}(y_{\text{vessel}}, \hat{y}_{\text{vessel}}) + \lambda \cdot \mathcal{L}_{\text{SmoothL1}}(l_{\text{true}}, \hat{l}_{\text{pred}})$$
+- La escena de referencia es sintética; todavía no se validó el flujo sobre escenas Sentinel-1 reales del área.
+- El modelo se entrenó con LS-SSDD, no con datos del Atlántico Sur.
+- El límite de la ZEE que usa el prototipo es una línea aproximada y solo referencial, no el límite oficial.
+- El despacho de alertas es una simulación: no se comunica con ninguna autoridad.
+- La clave de firma Ed25519 es de desarrollo; la custodia en HSM o KMS es trabajo futuro.
+- OceanEye aporta evidencia técnica; la calificación jurídica de los hechos corresponde a la autoridad competente.
 
-### 7. Correlación Cinemática (Dead Reckoning & Algoritmo Húngaro)
-Dado que las emisiones AIS no coinciden en el segundo exacto con el instante de captura orbital SAR ($t_{\text{sar}}$), cada reporte cinemático se proyecta temporalmente:
+## Licencia
 
-$$\vec{x}_{\text{proy}}(t_{\text{sar}}) = \vec{x}_{\text{ais}}(t_{\text{ais}}) + \vec{v}_{\text{SOG}} \cdot (t_{\text{sar}} - t_{\text{ais}})$$
-
-La asignación óptima global $1 \text{ a } 1$ entre blancos SAR y transmisiones AIS se resuelve minimizando la matriz de distancias ortodrómicas mediante el algoritmo húngaro ($O(n^3)$) con compuerta de exclusión elíptica ($R_{\text{gate}} = 3.0\text{ NM}$):
-
-$$\min \sum_{i} \sum_{j} C_{ij} X_{ij}, \quad C_{ij} = d_{\text{haversine}}(\vec{x}_i, \vec{y}_j)$$
-
-Los blancos físicos sin correspondencia AIS son catalogados como **Pesqueros Oscuros (Dark Vessels)**. Las transmisiones AIS sin retorno radar correspondiente son etiquetadas como **Ghost AIS Spoofing**.
-
-### 8. Cadena Pericial Criptográfica (RFC 8032)
-Cada expediente forense se congela en un diccionario canónico ordenado lexicográficamente, se resume mediante SHA-256 y se sella con firma digital asimétrica **Ed25519** generada por el subsistema seguro LAYA:
-
-$$\text{Hash} = \operatorname{SHA-256}\left(\operatorname{JSON}_{\text{canonical}}\right)$$
-
-$$\Sigma = \operatorname{Sign}_{\text{Ed25519}}\left(K_{\text{priv}}, \text{Hash}\right)$$
-
-Cualquier autoridad pericial o tribunal puede verificar la firma usando la clave pública oficial:
-- **Algoritmo:** Ed25519
-- **Clave Pública Hex:** `585ea4596b1cf29c3f1221793ed34ab6f56e4a3d9b97a9f967d3b16d6e3e062a`
-
----
-
-## 🌐 Endpoints Públicos de la API en Producción
-
-| Endpoint | Método | Descripción |
-|---|---|---|
-| `https://oceaneye-backend-29923645081.us-central1.run.app/api/v1/sar/benchmark` | `GET` | Ejecuta el benchmark de referencia de 15 buques en Milla 201 |
-| `https://oceaneye-backend-29923645081.us-central1.run.app/api/v1/sar/legal/benchmark` | `GET` | Evalúa los 30 casos periciales frente a la Ley 24.922 y CONVEMAR |
-| `https://oceaneye-backend-29923645081.us-central1.run.app/api/v1/sar/laya/public-key` | `GET` | Clave pública judicial Ed25519 para verificación en cortes |
-| `https://oceaneye-backend-29923645081.us-central1.run.app/api/v1/sar/dossier/{target_id}` | `GET` | Emisión de acta forense sellada para un buque específico |
-| `https://oceaneye-backend-29923645081.us-central1.run.app/api/v1/sar/laya/verify` | `POST` | Verificación criptográfica instantánea de certificados periciales |
-
----
-
-## 📄 Licencia y Marco Ético
-
-Distribuido bajo la **Licencia MIT**. Diseñado con fines exclusivos de conservación biológica marina, investigación científica académica y ejercicio legítimo de la soberanía nacional de acuerdo a la Convención de las Naciones Unidas sobre el Derecho del Mar (CONVEMAR).
+MIT. Ver [`LICENSE`](LICENSE).

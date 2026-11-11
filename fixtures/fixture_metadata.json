@@ -29,8 +29,8 @@
       "beam_m": 13.0,
       "heading_deg": 170.0,
       "has_active_ais": true,
-      "name": "LU RONG YU 588",
-      "mmsi": "413294810",
+      "name": "BUQUE EJEMPLO 01",
+      "mmsi": "000000001",
       "expected_classification": "AIS_CONFIRMED"
     },
     {
@@ -43,8 +43,8 @@
       "beam_m": 12.0,
       "heading_deg": 165.0,
       "has_active_ais": true,
-      "name": "FU YUAN YU 7881",
-      "mmsi": "413388120",
+      "name": "BUQUE EJEMPLO 02",
+      "mmsi": "000000002",
       "expected_classification": "AIS_CONFIRMED"
     },
     {
@@ -57,8 +57,8 @@
       "beam_m": 12.5,
       "heading_deg": 175.0,
       "has_active_ais": true,
-      "name": "ZHONG YU 218",
-      "mmsi": "413491029",
+      "name": "BUQUE EJEMPLO 03",
+      "mmsi": "000000003",
       "expected_classification": "AIS_CONFIRMED"
     },
     {
@@ -232,8 +232,8 @@
   ],
   "ais_reports": [
     {
-      "mmsi": "413294810",
-      "name": "LU RONG YU 588",
+      "mmsi": "000000001",
+      "name": "BUQUE EJEMPLO 01",
       "flag": "\ud83c\udde8\ud83c\uddf3 China",
       "vessel_type": "Squid Jigger",
       "lat": -45.2354,
@@ -243,8 +243,8 @@
       "last_seen": "2026-04-15T14:00:30+00:00"
     },
     {
-      "mmsi": "413388120",
-      "name": "FU YUAN YU 7881",
+      "mmsi": "000000002",
+      "name": "BUQUE EJEMPLO 02",
       "flag": "\ud83c\udde8\ud83c\uddf3 China",
       "vessel_type": "Squid Jigger",
       "lat": -45.43573,
@@ -254,8 +254,8 @@
       "last_seen": "2026-04-15T14:00:30+00:00"
     },
     {
-      "mmsi": "413491029",
-      "name": "ZHONG YU 218",
+      "mmsi": "000000003",
+      "name": "BUQUE EJEMPLO 03",
       "flag": "\ud83c\udde8\ud83c\uddf3 China",
       "vessel_type": "Squid Jigger",
       "lat": -45.9566,

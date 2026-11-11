@@ -262,8 +262,8 @@
         "dl_predicted_type": "CONFIRMED_FISHING_VESSEL"
       },
       "ais_vessel": {
-        "mmsi": "413388120",
-        "name": "FU YUAN YU 7881",
+        "mmsi": "000000002",
+        "name": "BUQUE EJEMPLO 02",
         "flag": "\ud83c\udde8\ud83c\uddf3 China",
         "vessel_type": "Squid Jigger",
         "orig_lat": -45.43573,
@@ -301,8 +301,8 @@
         "dl_predicted_type": "COMMERCIAL_VESSEL"
       },
       "ais_vessel": {
-        "mmsi": "413491029",
-        "name": "ZHONG YU 218",
+        "mmsi": "000000003",
+        "name": "BUQUE EJEMPLO 03",
         "flag": "\ud83c\udde8\ud83c\uddf3 China",
         "vessel_type": "Squid Jigger",
         "orig_lat": -45.9566,
@@ -340,8 +340,8 @@
         "dl_predicted_type": "COMMERCIAL_VESSEL"
       },
       "ais_vessel": {
-        "mmsi": "413294810",
-        "name": "LU RONG YU 588",
+        "mmsi": "000000001",
+        "name": "BUQUE EJEMPLO 01",
         "flag": "\ud83c\udde8\ud83c\uddf3 China",
         "vessel_type": "Squid Jigger",
         "orig_lat": -45.2354,
@@ -380,5 +380,5 @@
     }
   ],
   "summary": "Correlator Analysis Complete: 15 SAR targets processed. 3 confirmed with AIS, 12 DARK VESSELS detected (80.0% dark ratio), and 1 GHOST AIS spoofing anomalies identified.",
-  "evaluation_note": "Zero-credential reproducible benchmark verified for Fundaci\u00f3n BBVA 2026. Processed with LAYA Sistema 1 triage (sub-20ms) and Ed25519 cryptographic chain of custody."
+  "evaluation_note": "Evaluaci\u00f3n reproducible sin credenciales sobre la escena de referencia sint\u00e9tica (semilla fija 1982). Incluye el triage LAYA y el sellado SHA-256 + Ed25519 con clave de desarrollo."
 }
