@@ -13,6 +13,11 @@ Este repositorio es el kit de evaluación de **OceanEye**, un proyecto de invest
 - Sitio: <https://oceaneye-ai.com>
 - Contacto: <gaston@oceaneye-ai.com> · <contacto@oceaneye-ai.com>
 - Memoria presentada: [`MEMORIA_LEONARDO.md`](MEMORIA_LEONARDO.md), copia literal del texto enviado a la convocatoria. Algunas direcciones que cita corresponden a la infraestructura anterior y hoy no responden; el sitio vigente es <https://oceaneye-ai.com> y el material verificable es este repositorio. La memoria llama «ResNet-18 Dual-Stream» al clasificador que aquí se describe con más precisión como CNN residual compacta inspirada en ResNet-18.
+- Dónde está hoy lo que la memoria enlaza en sus secciones 4.4 y 7:
+  - Plataforma web y consola táctica: <https://oceaneye-ai.com> y <https://oceaneye-ai.com/app>.
+  - Benchmark de la escena de referencia: [`fixtures/sample_benchmark.json`](fixtures/sample_benchmark.json).
+  - Benchmark legal de 30 casos: [`resultados/evaluation_results.json`](resultados/evaluation_results.json).
+  - Entrenamiento y evaluación del clasificador: [`resultados/evaluation_metrics.json`](resultados/evaluation_metrics.json). El cuaderno de entrenamiento y el repositorio de desarrollo no son públicos; este kit no vuelve a entrenar el modelo.
 
 ## Cómo verificar en un comando
 
